@@ -1,0 +1,16 @@
+[Unit]
+Description=Telegram NMCK Bot
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/telegram-bot
+ExecStart=/opt/telegram-bot/.venv/bin/python3 bot_ui.py
+# ВАЖНО: сюда нужно подставить реальный токен от BotFather
+Environment=BOT_TOKEN=ТОКЕН_ОТ_BOTFATHER
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+
