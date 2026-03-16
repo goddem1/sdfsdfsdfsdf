@@ -376,21 +376,21 @@
             </span>
             <span class="chevron">›</span>
           </button>
-          <button class="btn">
+          <button class="btn" data-go="page-fuel">
             <span class="label">
               <span class="icon">⛽</span>
               <span>Топливо</span>
             </span>
             <span class="chevron">›</span>
           </button>
-          <button class="btn">
+          <button class="btn" data-go="page-tires">
             <span class="label">
               <span class="icon">🛞</span>
               <span>Шины, смазки</span>
             </span>
             <span class="chevron">›</span>
           </button>
-          <button class="btn">
+          <button class="btn" data-go="page-to">
             <span class="label">
               <span class="icon">🧰</span>
               <span>ТО и ремонт</span>
@@ -799,6 +799,248 @@
         </div>
       </section>
 
+      <!-- Страница: Топливо -->
+      <section id="page-fuel" class="page">
+        <div class="section-title">
+          <span>Топливо</span>
+          <span class="small">расчёт P_Tti</span>
+        </div>
+
+        <div class="card">
+          <div class="fields">
+            <div class="field">
+              <label><span class="left"><span class="index">1.</span> Цена топлива</span></label>
+              <input id="fuel_price" inputmode="decimal" placeholder="65.4" />
+              <div id="err_fuel_price" class="error">Введите число (точка или запятая).</div>
+            </div>
+
+            <div class="field">
+              <label><span class="left"><span class="index">2.</span> Норма расхода (линейная)</span></label>
+              <input id="fuel_norm_linear" inputmode="numeric" placeholder="17" />
+              <div id="err_fuel_norm_linear" class="error">Введите только цифры.</div>
+            </div>
+
+            <div class="field">
+              <label>
+                <span class="left"><span class="index">3.</span> Поправка на условия</span>
+                <span class="index">%</span>
+              </label>
+              <input id="fuel_adjustment" inputmode="numeric" placeholder="Берётся из НМЦК" readonly />
+              <div class="hint">Источник: «Расчёт НМЦК → 4. Коэффициенты… → Поправка расхода топлива»</div>
+            </div>
+
+            <div class="field">
+              <label><span class="left"><span class="index">4.</span> Норма на отопители</span></label>
+              <input id="fuel_norm_heaters" inputmode="numeric" placeholder="0" />
+              <div id="err_fuel_norm_heaters" class="error">Введите только цифры.</div>
+            </div>
+
+            <div class="field">
+              <label><span class="left"><span class="index">5.</span> Эксплуатационная скорость</span></label>
+              <input id="fuel_speed" inputmode="decimal" placeholder="61.667" />
+              <div id="err_fuel_speed" class="error">Введите число (точка или запятая).</div>
+            </div>
+
+            <div class="field">
+              <label><span class="left"><span class="index">6.</span> Месяцев работы отопителя</span></label>
+              <input id="fuel_heater_months" inputmode="numeric" placeholder="1" />
+              <div id="err_fuel_heater_months" class="error">Введите только цифры.</div>
+            </div>
+
+            <div class="field">
+              <label>
+                <span class="left"><span class="index">7.</span> Индекс цен нефтепродуктов</span>
+                <span class="index">auto</span>
+              </label>
+              <input id="fuel_oil_index" inputmode="decimal" placeholder="Берётся из НМЦК" readonly />
+              <div class="hint">Источник: «Расчёт НМЦК → 3. Индексы… → Индекс цен нефтепродуктов»</div>
+            </div>
+
+            <div class="field">
+              <label>
+                <span class="left"><span class="index">8.</span> ИТОГО P_Tti</span>
+                <span class="index">auto</span>
+              </label>
+              <input id="fuel_p_tti" inputmode="decimal" placeholder="Авторасчёт" readonly />
+              <div class="hint">
+                Формула: Цена*(Норма/100*(1+поправка/100)+Норма_отоп/скорость*мес/12)*Индекс_нефтепр
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-ghost" data-go="page-edit">
+          ← Назад к разделам
+        </button>
+      </section>
+
+      <!-- Страница: Шины, смазки -->
+      <section id="page-tires" class="page">
+        <div class="section-title">
+          <span>Шины, смазки</span>
+          <span class="small">P_SMti / P_Shti</span>
+        </div>
+
+        <div class="section-title">
+          <span>4.1. Смазочные материалы</span>
+          <span class="small">P_SMti</span>
+        </div>
+        <div class="card">
+          <div class="fields">
+            <div class="field">
+              <label><span class="left"><span class="index">1.</span> Расходы на топливо</span><span class="index">P_Tti</span></label>
+              <input id="tires_fuel_cost" inputmode="decimal" placeholder="Авто (Топливо)" readonly />
+            </div>
+            <div class="field">
+              <label><span class="left"><span class="index">2.</span> Норматив смазочных</span></label>
+              <input id="tires_lube_norm" inputmode="decimal" placeholder="0.075" />
+              <div id="err_tires_lube_norm" class="error">Введите число (точка или запятая).</div>
+            </div>
+            <div class="field">
+              <label><span class="left"><span class="index">3.</span> ИТОГО P_SMti</span><span class="index">auto</span></label>
+              <input id="tires_p_smti" inputmode="decimal" placeholder="Авторасчёт" readonly />
+              <div class="hint">Формула: P_Tti * норматив</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title">
+          <span>4.2. Расходы на шины</span>
+          <span class="small">P_Shti</span>
+        </div>
+        <div class="card">
+          <div class="fields">
+            <div class="field">
+              <label><span class="left"><span class="index">1.</span> Базовый норматив шин</span></label>
+              <input id="tires_base_norm" inputmode="decimal" placeholder="0.28" />
+              <div id="err_tires_base_norm" class="error">Введите число (точка или запятая).</div>
+            </div>
+            <div class="field">
+              <label><span class="left"><span class="index">2.</span> Индекс цен машин/оборудования</span><span class="index">auto</span></label>
+              <input id="tires_machinery_index" inputmode="decimal" placeholder="Берётся из НМЦК" readonly />
+              <div class="hint">Источник: «Расчёт НМЦК → 3. Индекс цен машин/оборудования»</div>
+            </div>
+            <div class="field">
+              <label><span class="left"><span class="index">3.</span> ИТОГО P_Shti</span><span class="index">auto</span></label>
+              <input id="tires_p_shti" inputmode="decimal" placeholder="Авторасчёт" readonly />
+              <div class="hint">Формула: базовый_норматив * индекс_машин</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-ghost" data-go="page-edit">
+          ← Назад к разделам
+        </button>
+      </section>
+
+      <!-- Страница: ТО и ремонт -->
+      <section id="page-to" class="page">
+        <div class="section-title">
+          <span>ТО и ремонт</span>
+          <span class="small">P_TOti</span>
+        </div>
+
+        <div class="section-title">
+          <span>5.1. ФОТ ремонтных рабочих</span>
+          <span class="small">ФОТ_ррi</span>
+        </div>
+        <div class="card">
+          <div class="fields">
+            <div class="field">
+              <label><span class="left"><span class="index">1.</span> Средняя з/п ремонтного рабочего</span></label>
+              <input id="to_salary_repair" inputmode="decimal" placeholder="87154.3" />
+              <div id="err_to_salary_repair" class="error">Введите число (точка или запятая).</div>
+            </div>
+            <div class="field">
+              <label><span class="left"><span class="index">2.</span> Годовой фонд раб. времени</span></label>
+              <input id="to_annual_fund" inputmode="numeric" placeholder="1812" />
+              <div id="err_to_annual_fund" class="error">Введите только цифры.</div>
+            </div>
+            <div class="field">
+              <label><span class="left"><span class="index">3.</span> Индекс потреб. цен</span><span class="index">auto</span></label>
+              <input id="to_cpi_index" inputmode="decimal" placeholder="Берётся из НМЦК" readonly />
+            </div>
+            <div class="field">
+              <label><span class="left"><span class="index">4.</span> Трудоемкость ТО</span></label>
+              <input id="to_labor_to" inputmode="numeric" placeholder="8" />
+              <div id="err_to_labor_to" class="error">Введите только цифры.</div>
+            </div>
+            <div class="field">
+              <label><span class="left"><span class="index">5.</span> Коэфф. климата (ТО)</span><span class="index">auto</span></label>
+              <input id="to_climate_to" inputmode="decimal" placeholder="Берётся из НМЦК" readonly />
+            </div>
+            <div class="field">
+              <label><span class="left"><span class="index">6.</span> Трудоемкость ремонта</span></label>
+              <input id="to_labor_repair" inputmode="decimal" placeholder="6.4" />
+              <div id="err_to_labor_repair" class="error">Введите число (точка или запятая).</div>
+            </div>
+            <div class="field">
+              <label><span class="left"><span class="index">7.</span> Коэфф. климата (ремонт)</span><span class="index">auto</span></label>
+              <input id="to_climate_repair" inputmode="decimal" placeholder="Берётся из НМЦК" readonly />
+            </div>
+            <div class="field">
+              <label><span class="left"><span class="index">8.</span> Ставка соц. отчислений</span><span class="index">auto</span></label>
+              <input id="to_social_rate" inputmode="decimal" placeholder="Берётся из НМЦК" readonly />
+            </div>
+            <div class="field">
+              <label><span class="left"><span class="index">9.</span> ИТОГО ФОТ_ррi</span><span class="index">auto</span></label>
+              <input id="to_fot_rr" inputmode="decimal" placeholder="Авторасчёт" readonly />
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title">
+          <span>5.2. Расходы на запчасти</span>
+          <span class="small">РЗЧ_ti</span>
+        </div>
+        <div class="card">
+          <div class="fields">
+            <div class="field">
+              <label><span class="left"><span class="index">1.</span> Базовый норматив запчастей</span></label>
+              <input id="to_spare_base_norm" inputmode="decimal" placeholder="3.2" />
+              <div id="err_to_spare_base_norm" class="error">Введите число (точка или запятая).</div>
+            </div>
+            <div class="field">
+              <label><span class="left"><span class="index">2.</span> Коэфф. климата (запчасти)</span><span class="index">auto</span></label>
+              <input id="to_climate_parts" inputmode="decimal" placeholder="Берётся из НМЦК" readonly />
+            </div>
+            <div class="field">
+              <label><span class="left"><span class="index">3.</span> Индекс цен машин/оборудования</span><span class="index">auto</span></label>
+              <input id="to_machinery_index" inputmode="decimal" placeholder="Берётся из НМЦК" readonly />
+            </div>
+            <div class="field">
+              <label><span class="left"><span class="index">4.</span> ИТОГО РЗЧ_ti</span><span class="index">auto</span></label>
+              <input id="to_spare_total" inputmode="decimal" placeholder="Авторасчёт" readonly />
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title">
+          <span>5.3. Итого ТО и ремонт</span>
+          <span class="small">P_TOti</span>
+        </div>
+        <div class="card">
+          <div class="fields">
+            <div class="field">
+              <label><span class="left"><span class="index">1.</span> ФОТ ремонтных</span><span class="index">ФОТ_ррi</span></label>
+              <input id="to_fot_rr_copy" inputmode="decimal" readonly placeholder="Авто" />
+            </div>
+            <div class="field">
+              <label><span class="left"><span class="index">2.</span> Запчасти</span><span class="index">РЗЧ_ti</span></label>
+              <input id="to_spare_total_copy" inputmode="decimal" readonly placeholder="Авто" />
+            </div>
+            <div class="field">
+              <label><span class="left"><span class="index">3.</span> ИТОГО P_TOti</span><span class="index">auto</span></label>
+              <input id="to_p_toti" inputmode="decimal" readonly placeholder="Авторасчёт" />
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-ghost" data-go="page-edit">
+          ← Назад к разделам
+        </button>
+      </section>
+
       <!-- Страница: ФОТ -->
       <section id="page-fot" class="page">
         <div class="section-title">
@@ -1083,13 +1325,13 @@
 
     function saveState() {
       try {
-        localStorage.setItem('mostransavto_state_v2', JSON.stringify(state));
+        localStorage.setItem('mostransavto_state_v3', JSON.stringify(state));
       } catch (_) {}
     }
 
     function loadState() {
       try {
-        const raw = localStorage.getItem('mostransavto_state_v2');
+        const raw = localStorage.getItem('mostransavto_state_v3');
         if (!raw) return;
         const parsed = JSON.parse(raw);
         if (!parsed || typeof parsed !== 'object') return;
@@ -1295,19 +1537,137 @@
       const srTi = (sr !== null && socialBase !== null) ? round2((sr * socialBase) / 100) : null;
       setInputValue('fot_sr_ti', srTi);
 
-      // NMCK section 5/6 using FOT + placeholders
+      // Топливо
+      const fuelPrice = num(getInputValue('fuel_price')) ?? 65.4;
+      const fuelNormLinearRaw = String(getInputValue('fuel_norm_linear') ?? '').trim();
+      const fuelNormLinearOk = fuelNormLinearRaw === '' ? true : /^[0-9]+$/.test(fuelNormLinearRaw);
+      const fuelNormLinear = fuelNormLinearRaw === '' ? 17 : Number(fuelNormLinearRaw);
+      const fuelNormHeatersRaw = String(getInputValue('fuel_norm_heaters') ?? '').trim();
+      const fuelNormHeatersOk = fuelNormHeatersRaw === '' ? true : /^[0-9]+$/.test(fuelNormHeatersRaw);
+      const fuelNormHeaters = fuelNormHeatersRaw === '' ? 0 : Number(fuelNormHeatersRaw);
+      const fuelSpeed = num(getInputValue('fuel_speed')) ?? 61.667;
+      const fuelHeaterMonthsRaw = String(getInputValue('fuel_heater_months') ?? '').trim();
+      const fuelHeaterMonthsOk = fuelHeaterMonthsRaw === '' ? true : /^[0-9]+$/.test(fuelHeaterMonthsRaw);
+      const fuelHeaterMonths = fuelHeaterMonthsRaw === '' ? 1 : Number(fuelHeaterMonthsRaw);
+
+      setError('err_fuel_price', fuelPrice === null);
+      setError('err_fuel_norm_linear', !fuelNormLinearOk);
+      setError('err_fuel_norm_heaters', !fuelNormHeatersOk);
+      setError('err_fuel_speed', fuelSpeed === null);
+      setError('err_fuel_heater_months', !fuelHeaterMonthsOk);
+
+      const adjFuel = state.nmck.fuelAdjustment ?? null;
+      const oilIndex = state.nmck.oilIndex ?? null;
+      setInputValue('fuel_adjustment', adjFuel);
+      setInputValue('fuel_oil_index', oilIndex);
+
+      let pTti = null;
+      if (
+        fuelPrice !== null &&
+        fuelSpeed !== null && fuelSpeed !== 0 &&
+        oilIndex !== null &&
+        adjFuel !== null &&
+        fuelNormLinearOk &&
+        fuelNormHeatersOk &&
+        fuelHeaterMonthsOk
+      ) {
+        const termLinear = (fuelNormLinear / 100) * (1 + (adjFuel / 100));
+        const termHeaters = (fuelNormHeaters / fuelSpeed) * (fuelHeaterMonths / 12);
+        pTti = fuelPrice * (termLinear + termHeaters) * oilIndex;
+        pTti = round2(pTti);
+      }
+      setInputValue('fuel_p_tti', pTti);
+
+      // Шины, смазки
+      setInputValue('tires_fuel_cost', pTti);
+      const lubeNorm = num(getInputValue('tires_lube_norm')) ?? 0.075;
+      setError('err_tires_lube_norm', lubeNorm === null);
+      const pSmti = (pTti !== null && lubeNorm !== null) ? round2(pTti * lubeNorm) : null;
+      setInputValue('tires_p_smti', pSmti);
+
+      const baseTire = num(getInputValue('tires_base_norm')) ?? 0.28;
+      setError('err_tires_base_norm', baseTire === null);
+      const machIndex = state.nmck.machineryIndex ?? null;
+      setInputValue('tires_machinery_index', machIndex);
+      const pShti = (baseTire !== null && machIndex !== null) ? round2(baseTire * machIndex) : null;
+      setInputValue('tires_p_shti', pShti);
+
+      // ТО и ремонт
+      const toSalary = num(getInputValue('to_salary_repair')) ?? 87154.3;
+      setError('err_to_salary_repair', toSalary === null);
+      const toFundRaw = String(getInputValue('to_annual_fund') ?? '').trim();
+      const toFundOk = toFundRaw === '' ? true : /^[0-9]+$/.test(toFundRaw);
+      const toFund = toFundRaw === '' ? 1812 : Number(toFundRaw);
+      setError('err_to_annual_fund', !toFundOk);
+
+      setInputValue('to_cpi_index', ipc);
+      setInputValue('to_climate_to', state.nmck.climateTo);
+      setInputValue('to_climate_repair', state.nmck.climateRepair);
+      setInputValue('to_social_rate', sr);
+
+      const laborToRaw = String(getInputValue('to_labor_to') ?? '').trim();
+      const laborToOk = laborToRaw === '' ? true : /^[0-9]+$/.test(laborToRaw);
+      const laborTo = laborToRaw === '' ? 8 : Number(laborToRaw);
+      setError('err_to_labor_to', !laborToOk);
+
+      const laborRepair = num(getInputValue('to_labor_repair')) ?? 6.4;
+      setError('err_to_labor_repair', laborRepair === null);
+
+      let fotRr = null;
+      if (
+        toSalary !== null &&
+        toFundOk && toFund !== 0 &&
+        ipc !== null &&
+        laborToOk &&
+        state.nmck.climateTo !== null && state.nmck.climateTo !== 0 &&
+        laborRepair !== null &&
+        state.nmck.climateRepair !== null &&
+        sr !== null
+      ) {
+        fotRr = (12 * (toSalary / toFund)) * ipc *
+          ((laborTo / state.nmck.climateTo) + (laborRepair * state.nmck.climateRepair)) *
+          0.001 * (1 + (sr / 100));
+        fotRr = round2(fotRr);
+      }
+      setInputValue('to_fot_rr', fotRr);
+      setInputValue('to_fot_rr_copy', fotRr);
+
+      const spareBase = num(getInputValue('to_spare_base_norm')) ?? 3.2;
+      setError('err_to_spare_base_norm', spareBase === null);
+      setInputValue('to_climate_parts', state.nmck.climateParts);
+      setInputValue('to_machinery_index', machIndex);
+      const spareTotal = (spareBase !== null && state.nmck.climateParts !== null && machIndex !== null)
+        ? round2(spareBase * state.nmck.climateParts * machIndex)
+        : null;
+      setInputValue('to_spare_total', spareTotal);
+      setInputValue('to_spare_total_copy', spareTotal);
+
+      const pToti = (fotRr !== null && spareTotal !== null) ? round2(fotRr + spareTotal) : null;
+      setInputValue('to_p_toti', pToti);
+
+      // NMCK section 5/6 using computed values
       setInputValue('nmck_cost_driver_labor', pOtvti);
       setInputValue('nmck_cost_conductor_labor', pOtkti);
       setInputValue('nmck_cost_social', srTi);
-      setInputValue('nmck_cost_fuel', 0);
-      setInputValue('nmck_cost_lubricants', 0);
-      setInputValue('nmck_cost_tires', 0);
-      setInputValue('nmck_cost_to_repair', 0);
+      setInputValue('nmck_cost_fuel', pTti);
+      setInputValue('nmck_cost_lubricants', pSmti);
+      setInputValue('nmck_cost_tires', pShti);
+      setInputValue('nmck_cost_to_repair', pToti);
       setInputValue('nmck_cost_other', 0);
       setInputValue('nmck_cost_extra_depr', 0);
       setInputValue('nmck_cost_rent', 0);
 
-      const sumKm = (pOtvti !== null && pOtkti !== null && srTi !== null) ? round2(pOtvti + pOtkti + srTi) : null;
+      const sumKm = (
+        pOtvti !== null &&
+        pOtkti !== null &&
+        srTi !== null &&
+        pTti !== null &&
+        pSmti !== null &&
+        pShti !== null &&
+        pToti !== null
+      )
+        ? round2(pOtvti + pOtkti + srTi + pTti + pSmti + pShti + pToti)
+        : null;
       setInputValue('nmck_cost_per_km_total', sumKm);
 
       const qtyTotal = state.nmck.qtyTotal;
@@ -1407,6 +1767,21 @@
     setInputValue('fot_vacation_coeff', state.fot.vacationCoeff);
     setInputValue('fot_planned_hours', state.fot.plannedHours);
     setInputValue('fot_annual_fund', state.fot.annualFund);
+    // defaults for new pages (if empty)
+    if (getInputValue('fuel_price') === '') setInputValue('fuel_price', 65.4);
+    if (getInputValue('fuel_norm_linear') === '') setInputValue('fuel_norm_linear', 17);
+    if (getInputValue('fuel_norm_heaters') === '') setInputValue('fuel_norm_heaters', 0);
+    if (getInputValue('fuel_speed') === '') setInputValue('fuel_speed', 61.667);
+    if (getInputValue('fuel_heater_months') === '') setInputValue('fuel_heater_months', 1);
+
+    if (getInputValue('tires_lube_norm') === '') setInputValue('tires_lube_norm', 0.075);
+    if (getInputValue('tires_base_norm') === '') setInputValue('tires_base_norm', 0.28);
+
+    if (getInputValue('to_salary_repair') === '') setInputValue('to_salary_repair', 87154.3);
+    if (getInputValue('to_annual_fund') === '') setInputValue('to_annual_fund', 1812);
+    if (getInputValue('to_labor_to') === '') setInputValue('to_labor_to', 8);
+    if (getInputValue('to_labor_repair') === '') setInputValue('to_labor_repair', 6.4);
+    if (getInputValue('to_spare_base_norm') === '') setInputValue('to_spare_base_norm', 3.2);
     setNmckMode(state.ui.nmckMode || 'calc');
     computeAll();
   </script>
