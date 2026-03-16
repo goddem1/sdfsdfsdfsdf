@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>МОСТРАНСАВТО — Мини‑приложение</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #050816;
+      --bg-alt: #0f172a;
+      --card: #020617;
+      --accent: #22c55e;
+      --accent-soft: rgba(34, 197, 94, 0.12);
+      --accent-2: #38bdf8;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #1f2937;
+      --error: #f97373;
+      --radius-lg: 18px;
+      --radius-md: 10px;
+      --radius-pill: 999px;
+      --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.85);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+      background: radial-gradient(circle at top, #1e293b 0, #020617 55%, #000 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      padding: 16px;
+    }
+    .app {
+      width: 100%;
+      max-width: 480px;
+      background: linear-gradient(145deg, #020617 0, #020617 40%, #020617 100%);
+      border-radius: 28px;
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(24px);
+    }
+    .header {
+      padding: 16px 18px 10px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 14px;
+      background: radial-gradient(circle at 20% 0, #4ade80 0, #22c55e 30%, #15803d 70%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #022c22;
+      box-shadow: 0 0 25px rgba(34, 197, 94, 0.55);
+    }
+    .title-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .title {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .subtitle {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .pill {
+      font-size: 10px;
+      padding: 4px 9px;
+      border-radius: var(--radius-pill);
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.18), rgba(59, 130, 246, 0.12));
+      color: #bbf7d0;
+      border: 1px solid rgba(52, 211, 153, 0.35);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .content {
+      padding: 16px 16px 18px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .page {
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .page.active {
+      display: flex;
+    }
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .section-title span.small {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+    }
+    .card {
+      background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.18), transparent 60%),
+                  radial-gradient(circle at bottom right, rgba(22, 163, 74, 0.22), transparent 60%),
+                  #020617;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(30, 64, 175, 0.55);
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .btn {
+      width: 100%;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 11px 12px;
+      font-size: 14px;
+      font-weight: 500;
+      text-align: left;
+      color: var(--text);
+      background: #020617;
+      border: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.16s ease-out;
+    }
+    .btn span.label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn span.icon {
+      font-size: 16px;
+    }
+    .btn span.chevron {
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      border-color: rgba(34, 197, 94, 0.9);
+      color: #022c22;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-primary span.chevron {
+      color: #bbf7d0;
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(148, 163, 184, 0.6);
+      background: #020617;
+    }
+    .btn-primary:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: rgba(15, 23, 42, 0.92);
+    }
+    .btn-ghost {
+      background: transparent;
+      border-color: transparent;
+      color: var(--muted);
+      justify-content: flex-start;
+      gap: 6px;
+      font-size: 13px;
+      padding-inline: 6px;
+    }
+    .btn-ghost:hover {
+      background: rgba(15, 23, 42, 0.8);
+      border-color: rgba(31, 41, 55, 0.8);
+      color: var(--text);
+    }
+    .badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--muted);
+    }
+    .fields {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .field label {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .field label span.left {
+      max-width: 80%;
+    }
+    .field label span.index {
+      font-size: 11px;
+      color: rgba(148, 163, 184, 0.9);
+    }
+    .field input {
+      width: 100%;
+      padding: 9px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(55, 65, 81, 0.8);
+      background: rgba(15, 23, 42, 0.96);
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+    .field input::placeholder {
+      color: rgba(148, 163, 184, 0.7);
+    }
+    .field input:focus {
+      border-color: rgba(34, 197, 94, 0.85);
+      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.5);
+      background: #020617;
+    }
+    .footer {
+      padding: 8px 14px 12px;
+      border-top: 1px solid rgba(30, 64, 175, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: radial-gradient(circle at top, rgba(30, 64, 175, 0.45), transparent 60%),
+                  rgba(15, 23, 42, 0.98);
+    }
+    .footer-text {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .footer-text b {
+      color: #e5e7eb;
+      font-weight: 500;
+    }
+    .footer-chip {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(56, 189, 248, 0.55);
+      color: #bae6fd;
+    }
+    @media (max-width: 380px) {
+      .app { border-radius: 20px; }
+      .header { padding-inline: 12px; }
+      .content { padding-inline: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="logo">M</div>
+      <div class="title-wrap">
+        <div class="title">МОСТРАНСАВТО</div>
+        <div class="subtitle">Расчёт НМЦК и корректировка данных</div>
+      </div>
+      <div class="pill">beta</div>
+    </header>
+
+    <main class="content">
+      <!-- Стартовая страница -->
+      <section id="page-main" class="page active">
+        <div class="section-title">
+          <span>Главное меню</span>
+          <span class="small">Выберите действие</span>
+        </div>
+        <div class="card">
+          <button class="btn btn-primary" data-go="page-nmck">
+            <span class="label">
+              <span class="icon">📊</span>
+              <span>Рассчитать НМЦК</span>
+            </span>
+            <span class="chevron">›</span>
+          </button>
+          <button class="btn btn-secondary" data-go="page-edit">
+            <span class="label">
+              <span class="icon">🛠️</span>
+              <span>Корректировать данные</span>
+            </span>
+            <span class="chevron">›</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Страница: Корректировать данные -->
+      <section id="page-edit" class="page">
+        <div class="section-title">
+          <span>Корректировка данных</span>
+          <span class="small">Выберите раздел</span>
+        </div>
+        <div class="card">
+          <button class="btn" data-go="page-nmck">
+            <span class="label">
+              <span class="icon">📊</span>
+              <span>Расчёт НМЦК</span>
+            </span>
+            <span class="chevron">›</span>
+          </button>
+          <button class="btn" data-go="page-fot">
+            <span class="label">
+              <span class="icon">👷</span>
+              <span>ФОТ</span>
+            </span>
+            <span class="chevron">›</span>
+          </button>
+          <button class="btn">
+            <span class="label">
+              <span class="icon">⛽</span>
+              <span>Топливо</span>
+            </span>
+            <span class="chevron">›</span>
+          </button>
+          <button class="btn">
+            <span class="label">
+              <span class="icon">🛞</span>
+              <span>Шины, смазки</span>
+            </span>
+            <span class="chevron">›</span>
+          </button>
+          <button class="btn">
+            <span class="label">
+              <span class="icon">🧰</span>
+              <span>ТО и ремонт</span>
+            </span>
+            <span class="chevron">›</span>
+          </button>
+          <button class="btn">
+            <span class="label">
+              <span class="icon">📦</span>
+              <span>Прочие</span>
+            </span>
+            <span class="chevron">›</span>
+          </button>
+          <button class="btn">
+            <span class="label">
+              <span class="icon">🎟️</span>
+              <span>Плата за проезд</span>
+            </span>
+            <span class="chevron">›</span>
+          </button>
+        </div>
+        <button class="btn btn-ghost" data-go="page-main">
+          ← Назад в главное меню
+        </button>
+      </section>
+
+      <!-- Страница: Расчёт НМЦК (заглушка) -->
+      <section id="page-nmck" class="page">
+        <div class="section-title">
+          <span>Расчёт НМЦК</span>
+          <span class="small">Скоро здесь будет формула</span>
+        </div>
+        <div class="card">
+          <p style="font-size:13px; color:var(--muted); line-height:1.5;">
+            Здесь будет форма и результаты расчёта НМЦК по введённым данным.
+          </p>
+        </div>
+        <button class="btn btn-ghost" data-go="page-main">
+          ← Назад в главное меню
+        </button>
+      </section>
+
+      <!-- Страница: ФОТ -->
+      <section id="page-fot" class="page">
+        <div class="section-title">
+          <span>2.1. Расходы на оплату труда водителей</span>
+          <span class="small">ФОТ</span>
+        </div>
+
+        <div class="card">
+          <div class="fields">
+            <div class="field">
+              <label>
+                <span class="left"><span class="index">1.</span> Средняя з/п водителя по региону</span>
+              </label>
+              <input type="number" inputmode="decimal" placeholder="Например, 75 000" />
+            </div>
+
+            <div class="field">
+              <label>
+                <span class="left"><span class="index">2.</span> Коэфф. к з/п водителя</span>
+              </label>
+              <input type="number" inputmode="decimal" step="0.01" placeholder="Например, 1.2" />
+            </div>
+
+            <div class="field">
+              <label>
+                <span class="left"><span class="index">3.</span> Средняя з/п водителя для расчёта</span>
+              </label>
+              <input type="number" inputmode="decimal" placeholder="Рассчитанное значение" />
+            </div>
+
+            <div class="field">
+              <label>
+                <span class="left"><span class="index">4.</span> Коэфф. отпуска</span>
+              </label>
+              <input type="number" inputmode="decimal" step="0.01" placeholder="Например, 1.33" />
+            </div>
+
+            <div class="field">
+              <label>
+                <span class="left"><span class="index">5.</span> Планируемые часы работы</span>
+              </label>
+              <input type="number" inputmode="numeric" placeholder="Часы в год" />
+            </div>
+
+            <div class="field">
+              <label>
+                <span class="left"><span class="index">6.</span> Коэфф. подг.-заключ. времени</span>
+              </label>
+              <input type="number" inputmode="decimal" step="0.01" placeholder="Например, 1.1" />
+            </div>
+
+            <div class="field">
+              <label>
+                <span class="left"><span class="index">7.</span> Индекс потреб. цен</span>
+              </label>
+              <input type="number" inputmode="decimal" step="0.01" placeholder="Например, 1.08" />
+            </div>
+
+            <div class="field">
+              <label>
+                <span class="left"><span class="index">8.</span> Пробег по контракту</span>
+              </label>
+              <input type="number" inputmode="numeric" placeholder="км" />
+            </div>
+
+            <div class="field">
+              <label>
+                <span class="left"><span class="index">9.</span> Годовой фонд раб. времени</span>
+              </label>
+              <input type="number" inputmode="numeric" placeholder="часы" />
+            </div>
+
+            <div class="field">
+              <label>
+                <span class="left"><span class="index">10.</span> ИТОГО P_OTVti</span>
+                <span class="index">итоговая сумма</span>
+              </label>
+              <input type="number" inputmode="decimal" placeholder="Будет рассчитано формулой" />
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; gap:8px; margin-top:4px;">
+          <button class="btn btn-ghost" data-go="page-edit">
+            ← Назад к разделам
+          </button>
+          <button class="btn btn-primary">
+            <span class="label">
+              <span class="icon">💾</span>
+              <span>Сохранить</span>
+            </span>
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-text">
+        <b>Мини‑приложение</b><br />
+        для расчёта НМЦК и ФОТ
+      </div>
+      <div class="footer-chip">v0.1 • draft</div>
+    </footer>
+  </div>
+
+  <script>
+    const pages = document.querySelectorAll('.page');
+    function showPage(id) {
+      pages.forEach(p => p.classList.toggle('active', p.id === id));
+    }
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-go]');
+      if (!btn) return;
+      e.preventDefault();
+      const target = btn.getAttribute('data-go');
+      if (target) showPage(target);
+    });
+  </script>
+</body>
+</html>
+
