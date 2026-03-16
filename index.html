@@ -264,6 +264,28 @@
     .error.show {
       display: block;
     }
+    .divider {
+      height: 1px;
+      background: rgba(148, 163, 184, 0.18);
+      margin: 6px 0;
+    }
+    .result-box {
+      padding: 10px 10px;
+      border-radius: 14px;
+      background: rgba(15, 23, 42, 0.88);
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      font-size: 12px;
+      color: rgba(229, 231, 235, 0.92);
+      line-height: 1.55;
+      white-space: pre-wrap;
+    }
+    .result-box b {
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+    .hidden {
+      display: none !important;
+    }
     .footer {
       padding: 8px 14px 12px;
       border-top: 1px solid rgba(30, 64, 175, 0.5);
@@ -340,7 +362,7 @@
           <span class="small">Выберите раздел</span>
         </div>
         <div class="card">
-          <button class="btn" data-go="page-nmck">
+          <button class="btn" data-go="page-nmck" data-nmck-mode="edit">
             <span class="label">
               <span class="icon">📊</span>
               <span>Расчёт НМЦК</span>
@@ -395,67 +417,386 @@
         </button>
       </section>
 
-      <!-- Страница: Расчёт НМЦК (заглушка) -->
+      <!-- Страница: Расчёт НМЦК -->
       <section id="page-nmck" class="page">
         <div class="section-title">
           <span>Расчёт НМЦК</span>
-          <span class="small">Источник коэффициентов для ФОТ</span>
+          <span id="nmck_mode_badge" class="small">—</span>
         </div>
         <div class="card">
-          <div class="fields">
+          <div class="section-title" style="margin-bottom:2px;">
+            <span>1. Исходные данные маршрута и контракта</span>
+            <span class="small">обязательный раздел</span>
+          </div>
+
+          <div class="fields" id="nmck_section1">
             <div class="field">
-              <label>
-                <span class="left">4. Коэффициенты… — Коэфф. к зарплате водителя</span>
-                <span class="index">k_zp</span>
-              </label>
-              <input id="nmck_driver_salary_coeff" type="number" inputmode="decimal" step="0.01" placeholder="Например, 1.00" />
+              <label><span class="left"><span class="index">1.</span> Номер маршрута</span></label>
+              <input id="nmck_route_number" inputmode="numeric" placeholder="Только числа" />
+              <div id="err_nmck_route_number" class="error">Введите только числа (без букв и символов).</div>
+            </div>
+
+            <div class="field">
+              <label><span class="left"><span class="index">2.</span> Наименование маршрута</span></label>
+              <input id="nmck_route_name" placeholder="Без цифр" />
+              <div id="err_nmck_route_name" class="error">Наименование не должно содержать цифр.</div>
+            </div>
+
+            <div class="field">
+              <label><span class="left"><span class="index">3.</span> Класс ТС</span></label>
+              <input id="nmck_vehicle_class" list="nmck_vehicle_class_list" placeholder="Выберите из списка" />
+              <datalist id="nmck_vehicle_class_list">
+                <option value="особо малый"></option>
+                <option value="малый"></option>
+                <option value="средний"></option>
+                <option value="большой"></option>
+                <option value="особо большой"></option>
+              </datalist>
+              <div id="err_nmck_vehicle_class" class="error">Выберите значение из списка.</div>
+            </div>
+
+            <div class="field">
+              <label><span class="left"><span class="index">4.</span> Тип маршрута</span></label>
+              <input id="nmck_route_type" list="nmck_route_type_list" placeholder="Выберите из списка" />
+              <datalist id="nmck_route_type_list">
+                <option value="городской"></option>
+                <option value="пригородный"></option>
+                <option value="межмуниципальный"></option>
+              </datalist>
+              <div id="err_nmck_route_type" class="error">Выберите значение из списка.</div>
+            </div>
+
+            <div class="field">
+              <label><span class="left"><span class="index">5.</span> Модель ТС</span></label>
+              <input id="nmck_vehicle_model" placeholder="Марка/модель (буквы, цифры и символы)" />
+            </div>
+
+            <div class="field">
+              <label><span class="left"><span class="index">6.</span> Тип топлива</span></label>
+              <input id="nmck_fuel_type" list="nmck_fuel_list" placeholder="Выберите из списка" />
+              <datalist id="nmck_fuel_list">
+                <option value="бензин"></option>
+                <option value="дизель"></option>
+                <option value="газ"></option>
+                <option value="электро"></option>
+              </datalist>
+              <div id="err_nmck_fuel_type" class="error">Выберите значение из списка.</div>
+            </div>
+
+            <div class="field">
+              <label><span class="left"><span class="index">7.</span> Пробег по контракту</span></label>
+              <input id="nmck_contract_mileage" inputmode="decimal" placeholder="Число (точка или запятая)" />
+              <div id="err_nmck_contract_mileage" class="error">Введите число (разделитель: точка или запятая).</div>
+            </div>
+
+            <div class="field">
+              <label><span class="left"><span class="index">8.</span> Количество ТС (основное)</span></label>
+              <input id="nmck_qty_main" inputmode="numeric" placeholder="Только цифры" />
+              <div id="err_nmck_qty_main" class="error">Введите только цифры.</div>
+            </div>
+
+            <div class="field">
+              <label><span class="left"><span class="index">9.</span> Количество ТС (резерв)</span></label>
+              <input id="nmck_qty_res" inputmode="numeric" placeholder="Только цифры" />
+              <div id="err_nmck_qty_res" class="error">Введите только цифры.</div>
+            </div>
+
+            <div class="field">
+              <label><span class="left"><span class="index">10.</span> Вместимость ТС</span></label>
+              <input id="nmck_capacity" inputmode="numeric" placeholder="Только цифры" />
+              <div id="err_nmck_capacity" class="error">Введите только цифры.</div>
+            </div>
+
+            <div class="field">
+              <label><span class="left"><span class="index">11.</span> Цена ТС</span></label>
+              <input id="nmck_vehicle_price" inputmode="decimal" placeholder="Число (точка или запятая)" />
+              <div id="err_nmck_vehicle_price" class="error">Введите число (разделитель: точка или запятая).</div>
+            </div>
+
+            <div class="field">
+              <label><span class="left"><span class="index">12.</span> Срок службы ТС</span></label>
+              <input id="nmck_lifetime" inputmode="numeric" placeholder="Только цифры" />
+              <div id="err_nmck_lifetime" class="error">Введите только цифры.</div>
+            </div>
+
+            <div class="field">
+              <label><span class="left"><span class="index">13.</span> Период контракта</span></label>
+              <input id="nmck_contract_period" inputmode="numeric" placeholder="Только цифры" />
+              <div id="err_nmck_contract_period" class="error">Введите только цифры.</div>
+            </div>
+
+            <div class="field">
+              <label><span class="left"><span class="index">14.</span> Планируемая плата за проезд</span></label>
+              <input id="nmck_planned_fare" inputmode="decimal" placeholder="Число (точка или запятая)" />
+              <div class="hint">По умолчанию берётся из «7. Плата за проезд → P_t (по факту)», если заполнено.</div>
+              <div id="err_nmck_planned_fare" class="error">Введите число (разделитель: точка или запятая).</div>
+            </div>
+
+            <div class="field">
+              <label><span class="left"><span class="index">15.</span> Субсидии</span></label>
+              <input id="nmck_subsidy" inputmode="numeric" placeholder="Только цифры" />
+              <div id="err_nmck_subsidy" class="error">Введите только цифры.</div>
+            </div>
+
+            <div class="field">
+              <label><span class="left"><span class="index">16.</span> Климатическая зона</span></label>
+              <input id="nmck_climate_zone" placeholder="Только буквы" />
+              <div id="err_nmck_climate_zone" class="error">Введите только буквы (без цифр и символов).</div>
             </div>
 
             <div class="field">
               <label>
-                <span class="left">4. Коэффициенты… — Коэфф. подгот.-заключ. времени</span>
-                <span class="index">k_pz</span>
+                <span class="left"><span class="index">17.</span> Количество ТС ИТОГО (с резервом)</span>
+                <span class="index">auto</span>
               </label>
-              <input id="nmck_prep_coeff" type="number" inputmode="decimal" step="0.01" placeholder="Например, 1.10" />
+              <input id="nmck_qty_total" inputmode="numeric" placeholder="Авторасчёт" readonly />
             </div>
 
-            <div class="field">
-              <label>
-                <span class="left">3. Индексы… — Индекс потребительских цен</span>
-                <span class="index">ipc</span>
-              </label>
-              <input id="nmck_cpi_index" type="number" inputmode="decimal" step="0.01" placeholder="Например, 1.08" />
-            </div>
-
-            <div class="field">
-              <label>
-                <span class="left">1. Исходные данные… — Пробег по контракту</span>
-                <span class="index">L</span>
-              </label>
-              <input id="nmck_contract_mileage" type="number" inputmode="numeric" placeholder="км" />
-            </div>
-
-            <div class="field">
-              <label>
-                <span class="left">4. Коэффициенты… — Коэфф. за функции кондуктора</span>
-                <span class="index">k_kond</span>
-              </label>
-              <input id="nmck_conductor_coeff" type="number" inputmode="decimal" step="0.01" placeholder="Например, 0.00 или 1.00" />
-              <div class="hint">Этот коэффициент используется в разделе ФОТ 2.2.</div>
-            </div>
-
-            <div class="field">
-              <label>
-                <span class="left">4. Коэффициенты… — Ставка соц. отчислений</span>
-                <span class="index">sr %</span>
-              </label>
-              <input id="nmck_social_rate" type="number" inputmode="decimal" step="0.01" placeholder="Например, 30" />
+            <div style="display:flex; justify-content:space-between; gap:8px; margin-top:4px;">
+              <button class="btn btn-ghost" data-go="page-main">
+                ← Назад
+              </button>
+              <button class="btn btn-primary" id="btn_nmck_calculate" type="button">
+                <span class="label">
+                  <span class="icon">🧮</span>
+                  <span>Рассчитать</span>
+                </span>
+              </button>
             </div>
           </div>
         </div>
-        <button class="btn btn-ghost" data-go="page-main">
-          ← Назад в главное меню
-        </button>
+
+        <div id="nmck_all_sections" class="hidden">
+          <div class="section-title">
+            <span>2. Параметры ТС и эксплуатации</span>
+            <span class="small">частично авто</span>
+          </div>
+          <div class="card">
+            <div class="fields">
+              <div class="field">
+                <label><span class="left"><span class="index">1.</span> Уровень рентабельности</span></label>
+                <input id="nmck_profitability" inputmode="decimal" placeholder="1.096" />
+                <div id="err_nmck_profitability" class="error">Введите число (точка или запятая).</div>
+              </div>
+
+              <div class="field">
+                <label>
+                  <span class="left"><span class="index">2.</span> Коэфф. использования пробега</span>
+                  <span class="index">auto</span>
+                </label>
+                <input id="nmck_mileage_utilization" inputmode="decimal" placeholder="Авторасчёт" readonly />
+                <div class="hint">Зависит от «Тип маршрута» (пригородный/городской/межмуниципальный).</div>
+              </div>
+
+              <div class="field">
+                <label><span class="left"><span class="index">3.</span> Ресурс ТС до списания</span></label>
+                <input id="nmck_vehicle_resource" inputmode="numeric" placeholder="640000" />
+                <div id="err_nmck_vehicle_resource" class="error">Введите только цифры.</div>
+              </div>
+
+              <div class="field">
+                <label><span class="left"><span class="index">4.</span> Затраты на доп. оборудование</span></label>
+                <input id="nmck_extra_equipment_cost" inputmode="numeric" placeholder="6399" />
+                <div id="err_nmck_extra_equipment_cost" class="error">Введите только цифры.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-title">
+            <span>3. Индексы ценовые (региональные)</span>
+            <span class="small">для расчётов</span>
+          </div>
+          <div class="card">
+            <div class="fields">
+              <div class="field">
+                <label><span class="left"><span class="index">1.</span> Индекс потребительских цен</span></label>
+                <input id="nmck_cpi_index" inputmode="decimal" placeholder="1.051" />
+                <div id="err_nmck_cpi_index" class="error">Введите число (точка или запятая).</div>
+              </div>
+              <div class="field">
+                <label><span class="left"><span class="index">2.</span> Индекс цен нефтепродуктов</span></label>
+                <input id="nmck_oil_index" inputmode="decimal" placeholder="1.046" />
+                <div id="err_nmck_oil_index" class="error">Введите число (точка или запятая).</div>
+              </div>
+              <div class="field">
+                <label><span class="left"><span class="index">3.</span> Индекс цен машин/оборудования</span></label>
+                <input id="nmck_machinery_index" inputmode="decimal" placeholder="2.0334" />
+                <div id="err_nmck_machinery_index" class="error">Введите число (точка или запятая).</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-title">
+            <span>4. Коэффициенты эксплуатационные и климатические</span>
+            <span class="small">для ФОТ и не только</span>
+          </div>
+          <div class="card">
+            <div class="fields">
+              <div class="field">
+                <label><span class="left"><span class="index">1.</span> Коэфф. подгот.-заключ. времени</span></label>
+                <input id="nmck_prep_coeff" list="nmck_prep_coeff_list" inputmode="decimal" placeholder="1 или 1.06" />
+                <datalist id="nmck_prep_coeff_list">
+                  <option value="1"></option>
+                  <option value="1.06"></option>
+                </datalist>
+                <div id="err_nmck_prep_coeff" class="error">Выберите 1 или 1.06.</div>
+              </div>
+
+              <div class="field">
+                <label><span class="left"><span class="index">2.</span> Коэфф. климата (ТО)</span></label>
+                <input id="nmck_climate_to" inputmode="decimal" placeholder="1.00" />
+                <div id="err_nmck_climate_to" class="error">Диапазон: 0.9 – 1.2</div>
+              </div>
+
+              <div class="field">
+                <label><span class="left"><span class="index">3.</span> Коэфф. климата (ремонт)</span></label>
+                <input id="nmck_climate_repair" inputmode="decimal" placeholder="1.00" />
+                <div id="err_nmck_climate_repair" class="error">Диапазон: 1 – 1.25</div>
+              </div>
+
+              <div class="field">
+                <label><span class="left"><span class="index">4.</span> Коэфф. климата (запчасти)</span></label>
+                <input id="nmck_climate_parts" inputmode="decimal" placeholder="1.00" />
+                <div id="err_nmck_climate_parts" class="error">Диапазон: 1 – 1.25</div>
+              </div>
+
+              <div class="field">
+                <label><span class="left"><span class="index">5.</span> Коэфф. прочих расходов</span></label>
+                <input id="nmck_other_costs_coeff" inputmode="decimal" placeholder="0.755" />
+                <div id="err_nmck_other_costs_coeff" class="error">Введите число (точка или запятая).</div>
+              </div>
+
+              <div class="field">
+                <label><span class="left"><span class="index">6.</span> Коэфф. к зарплате водителя</span></label>
+                <input id="nmck_driver_salary_coeff" inputmode="decimal" placeholder="1.15" />
+                <div id="err_nmck_driver_salary_coeff" class="error">Диапазон: 1 – 1.2</div>
+              </div>
+
+              <div class="field">
+                <label><span class="left"><span class="index">7.</span> Коэфф. за функции кондуктора</span></label>
+                <input id="nmck_conductor_coeff" list="nmck_conductor_coeff_list" inputmode="decimal" placeholder="0 / 0.15 / 0.3" />
+                <datalist id="nmck_conductor_coeff_list">
+                  <option value="0"></option>
+                  <option value="0.15"></option>
+                  <option value="0.3"></option>
+                </datalist>
+                <div id="err_nmck_conductor_coeff" class="error">Выберите 0, 0.15 или 0.3.</div>
+              </div>
+
+              <div class="field">
+                <label><span class="left"><span class="index">8.</span> Ставка соц. отчислений</span></label>
+                <input id="nmck_social_rate" inputmode="decimal" placeholder="30.8" />
+                <div id="err_nmck_social_rate" class="error">Введите число (точка или запятая).</div>
+              </div>
+
+              <div class="field">
+                <label><span class="left"><span class="index">9.</span> Поправка расхода топлива</span></label>
+                <input id="nmck_fuel_adjustment" inputmode="numeric" placeholder="6" />
+                <div id="err_nmck_fuel_adjustment" class="error">Введите только цифры.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-title">
+            <span>5. Расчет максимальной себестоимости 1км (с)</span>
+            <span class="small">свод</span>
+          </div>
+          <div class="card">
+            <div class="fields">
+              <div class="field">
+                <label><span class="left"><span class="index">1.</span> Оплата труда водителей</span><span class="index">P_OTVti</span></label>
+                <input id="nmck_cost_driver_labor" readonly placeholder="Авто (ФОТ)" />
+              </div>
+              <div class="field">
+                <label><span class="left"><span class="index">2.</span> Оплата труда «кондукторов»</span><span class="index">P_OTKti</span></label>
+                <input id="nmck_cost_conductor_labor" readonly placeholder="Авто (ФОТ)" />
+              </div>
+              <div class="field">
+                <label><span class="left"><span class="index">3.</span> Социальные отчисления</span><span class="index">SR_ti</span></label>
+                <input id="nmck_cost_social" readonly placeholder="Авто (ФОТ)" />
+              </div>
+
+              <div class="hint">Пункты 4–10 будут подтягиваться из соответствующих разделов (пока 0).</div>
+
+              <div class="field">
+                <label><span class="left"><span class="index">4.</span> Топливо</span><span class="index">P_Tti</span></label>
+                <input id="nmck_cost_fuel" readonly placeholder="0" />
+              </div>
+              <div class="field">
+                <label><span class="left"><span class="index">5.</span> Смазочные материалы</span><span class="index">P_SMti</span></label>
+                <input id="nmck_cost_lubricants" readonly placeholder="0" />
+              </div>
+              <div class="field">
+                <label><span class="left"><span class="index">6.</span> Шины</span><span class="index">P_Shti</span></label>
+                <input id="nmck_cost_tires" readonly placeholder="0" />
+              </div>
+              <div class="field">
+                <label><span class="left"><span class="index">7.</span> ТО и ремонт</span><span class="index">P_TOti</span></label>
+                <input id="nmck_cost_to_repair" readonly placeholder="0" />
+              </div>
+              <div class="field">
+                <label><span class="left"><span class="index">8.</span> Прочие и косвенные</span><span class="index">PKR_ti</span></label>
+                <input id="nmck_cost_other" readonly placeholder="0" />
+              </div>
+              <div class="field">
+                <label><span class="left"><span class="index">9.</span> Амортизация доп. оборудования</span><span class="index">P_oi</span></label>
+                <input id="nmck_cost_extra_depr" readonly placeholder="0" />
+              </div>
+              <div class="field">
+                <label><span class="left"><span class="index">10.</span> Аренда</span><span class="index">РП_ijt</span></label>
+                <input id="nmck_cost_rent" readonly placeholder="0" />
+              </div>
+              <div class="field">
+                <label>
+                  <span class="left"><span class="index">11.</span> ИТОГО: Максимальная стоимость 1 км</span>
+                  <span class="index">sum</span>
+                </label>
+                <input id="nmck_cost_per_km_total" readonly placeholder="Авторасчёт" />
+              </div>
+            </div>
+          </div>
+
+          <div class="section-title">
+            <span>6. Расчет начальной (максимальной) цены контракта</span>
+            <span class="small">итог</span>
+          </div>
+          <div class="card">
+            <div class="fields">
+              <div class="field">
+                <label><span class="left"><span class="index">1.</span> На 1 км с учетом всех ТС</span></label>
+                <input id="nmck_price_per_km_all_vehicles" readonly placeholder="Авторасчёт" />
+              </div>
+              <div class="field">
+                <label><span class="left"><span class="index">2.</span> Общая стоимость на весь пробег</span></label>
+                <input id="nmck_total_cost_full_mileage" readonly placeholder="Авторасчёт" />
+              </div>
+              <div class="field">
+                <label><span class="left"><span class="index">3.</span> Минус: планируемая плата</span></label>
+                <input id="nmck_minus_planned_fare" readonly placeholder="Авто" />
+              </div>
+              <div class="field">
+                <label><span class="left"><span class="index">4.</span> Минус: субсидии</span></label>
+                <input id="nmck_minus_subsidy" readonly placeholder="Авто" />
+              </div>
+              <div class="field">
+                <label><span class="left"><span class="index">5.</span> НАЧАЛЬНАЯ (МАКСИМАЛЬНАЯ) ЦЕНА КОНТРАКТА</span></label>
+                <input id="nmck_contract_price_final" readonly placeholder="Авторасчёт" />
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-ghost" data-go="page-edit">
+            ← Назад к разделам
+          </button>
+        </div>
+
+        <div id="nmck_calc_results" class="card hidden">
+          <div class="section-title" style="margin-bottom:4px;">
+            <span>Результат расчёта</span>
+            <span class="small">предпросмотр</span>
+          </div>
+          <div id="nmck_results_text" class="result-box">Заполните данные и нажмите «Рассчитать».</div>
+        </div>
       </section>
 
       <!-- Страница: ФОТ -->
@@ -645,22 +986,52 @@
     function showPage(id) {
       pages.forEach(p => p.classList.toggle('active', p.id === id));
     }
-    document.addEventListener('click', (e) => {
-      const btn = e.target.closest('[data-go]');
-      if (!btn) return;
-      e.preventDefault();
-      const target = btn.getAttribute('data-go');
-      if (target) showPage(target);
-    });
 
     const state = {
+      ui: {
+        nmckMode: 'calc', // 'calc' | 'edit'
+      },
       nmck: {
-        driverSalaryCoeff: null,
-        prepCoeff: null,
-        cpiIndex: null,
+        // Section 1
+        routeNumber: '',
+        routeName: '',
+        vehicleClass: '',
+        routeType: '',
+        vehicleModel: '',
+        fuelType: '',
         contractMileage: null,
-        conductorCoeff: null,
-        socialRate: null,
+        qtyMain: null,
+        qtyRes: null,
+        capacity: null,
+        vehiclePrice: null,
+        lifetime: null,
+        contractPeriod: null,
+        plannedFare: null,
+        subsidy: null,
+        climateZone: '',
+        qtyTotal: null,
+
+        // Section 2
+        profitability: 1.096,
+        mileageUtilization: null,
+        vehicleResource: 640000,
+        extraEquipmentCost: 6399,
+
+        // Section 3
+        cpiIndex: 1.051,
+        oilIndex: 1.046,
+        machineryIndex: 2.0334,
+
+        // Section 4
+        prepCoeff: 1,
+        climateTo: 1,
+        climateRepair: 1,
+        climateParts: 1,
+        otherCostsCoeff: 0.755,
+        driverSalaryCoeff: 1.15,
+        conductorCoeff: 0.3,
+        socialRate: 30.8,
+        fuelAdjustment: 6,
       },
       fot: {
         driverSalaryRegion: 87133,
@@ -678,6 +1049,16 @@
       return Number.isFinite(x) ? x : null;
     }
 
+    function isDigitsOnly(s) {
+      return typeof s === 'string' && /^[0-9]+$/.test(s.trim());
+    }
+    function hasDigits(s) {
+      return typeof s === 'string' && /\d/.test(s);
+    }
+    function isLettersOnly(s) {
+      return typeof s === 'string' && /^[A-Za-zА-Яа-яЁё\s]+$/.test((s ?? '').trim());
+    }
+
     function setInputValue(id, value) {
       const el = document.getElementById(id);
       if (!el) return;
@@ -690,36 +1071,185 @@
       return el.value;
     }
 
-    function clamp(x, a, b) {
-      return Math.min(b, Math.max(a, x));
-    }
-
     function round2(x) {
       return Math.round((x + Number.EPSILON) * 100) / 100;
     }
 
-    function compute() {
-      // Pull NMCK sources from inputs into state
-      state.nmck.driverSalaryCoeff = num(getInputValue('nmck_driver_salary_coeff'));
-      state.nmck.prepCoeff = num(getInputValue('nmck_prep_coeff'));
-      state.nmck.cpiIndex = num(getInputValue('nmck_cpi_index'));
-      state.nmck.contractMileage = num(getInputValue('nmck_contract_mileage'));
-      state.nmck.conductorCoeff = num(getInputValue('nmck_conductor_coeff'));
-      state.nmck.socialRate = num(getInputValue('nmck_social_rate'));
+    function setError(id, show) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.toggle('show', !!show);
+    }
 
-      // Pull editable FOT fields
+    function saveState() {
+      try {
+        localStorage.setItem('mostransavto_state_v2', JSON.stringify(state));
+      } catch (_) {}
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem('mostransavto_state_v2');
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object') return;
+        if (parsed.ui) Object.assign(state.ui, parsed.ui);
+        if (parsed.nmck) Object.assign(state.nmck, parsed.nmck);
+        if (parsed.fot) Object.assign(state.fot, parsed.fot);
+      } catch (_) {}
+    }
+
+    function allowed(value, list) {
+      const v = String(value ?? '').trim().toLowerCase();
+      return list.includes(v);
+    }
+
+    function computeNmckDerived() {
+      const qm = state.nmck.qtyMain;
+      const qr = state.nmck.qtyRes;
+      state.nmck.qtyTotal = (qm !== null && qr !== null) ? (qm + qr) : null;
+
+      const rt = String(state.nmck.routeType ?? '').trim().toLowerCase();
+      if (rt === 'пригородный') state.nmck.mileageUtilization = 0.91;
+      else if (rt === 'городской') state.nmck.mileageUtilization = 0.87;
+      else if (rt === 'межмуниципальный') state.nmck.mileageUtilization = 0.5;
+      else state.nmck.mileageUtilization = null;
+    }
+
+    function renderNmck() {
+      setInputValue('nmck_route_number', state.nmck.routeNumber);
+      setInputValue('nmck_route_name', state.nmck.routeName);
+      setInputValue('nmck_vehicle_class', state.nmck.vehicleClass);
+      setInputValue('nmck_route_type', state.nmck.routeType);
+      setInputValue('nmck_vehicle_model', state.nmck.vehicleModel);
+      setInputValue('nmck_fuel_type', state.nmck.fuelType);
+      setInputValue('nmck_contract_mileage', state.nmck.contractMileage);
+      setInputValue('nmck_qty_main', state.nmck.qtyMain);
+      setInputValue('nmck_qty_res', state.nmck.qtyRes);
+      setInputValue('nmck_capacity', state.nmck.capacity);
+      setInputValue('nmck_vehicle_price', state.nmck.vehiclePrice);
+      setInputValue('nmck_lifetime', state.nmck.lifetime);
+      setInputValue('nmck_contract_period', state.nmck.contractPeriod);
+      setInputValue('nmck_planned_fare', state.nmck.plannedFare);
+      setInputValue('nmck_subsidy', state.nmck.subsidy);
+      setInputValue('nmck_climate_zone', state.nmck.climateZone);
+      setInputValue('nmck_qty_total', state.nmck.qtyTotal);
+
+      setInputValue('nmck_profitability', state.nmck.profitability);
+      setInputValue('nmck_mileage_utilization', state.nmck.mileageUtilization);
+      setInputValue('nmck_vehicle_resource', state.nmck.vehicleResource);
+      setInputValue('nmck_extra_equipment_cost', state.nmck.extraEquipmentCost);
+
+      setInputValue('nmck_cpi_index', state.nmck.cpiIndex);
+      setInputValue('nmck_oil_index', state.nmck.oilIndex);
+      setInputValue('nmck_machinery_index', state.nmck.machineryIndex);
+
+      setInputValue('nmck_prep_coeff', state.nmck.prepCoeff);
+      setInputValue('nmck_climate_to', state.nmck.climateTo);
+      setInputValue('nmck_climate_repair', state.nmck.climateRepair);
+      setInputValue('nmck_climate_parts', state.nmck.climateParts);
+      setInputValue('nmck_other_costs_coeff', state.nmck.otherCostsCoeff);
+      setInputValue('nmck_driver_salary_coeff', state.nmck.driverSalaryCoeff);
+      setInputValue('nmck_conductor_coeff', state.nmck.conductorCoeff);
+      setInputValue('nmck_social_rate', state.nmck.socialRate);
+      setInputValue('nmck_fuel_adjustment', state.nmck.fuelAdjustment);
+    }
+
+    function validateSection1(showErrors = true) {
+      const allowedClass = ['особо малый', 'малый', 'средний', 'большой', 'особо большой'];
+      const allowedRouteType = ['городской', 'пригородный', 'межмуниципальный'];
+      const allowedFuel = ['бензин', 'дизель', 'газ', 'электро'];
+
+      const ok1 = isDigitsOnly(state.nmck.routeNumber);
+      const ok2 = String(state.nmck.routeName ?? '').trim().length > 0 && !hasDigits(state.nmck.routeName);
+      const ok3 = allowed(state.nmck.vehicleClass, allowedClass);
+      const ok4 = allowed(state.nmck.routeType, allowedRouteType);
+      const ok6 = allowed(state.nmck.fuelType, allowedFuel);
+      const ok7 = state.nmck.contractMileage !== null && state.nmck.contractMileage > 0;
+      const ok8 = state.nmck.qtyMain !== null && Number.isFinite(state.nmck.qtyMain);
+      const ok9 = state.nmck.qtyRes !== null && Number.isFinite(state.nmck.qtyRes);
+      const ok10 = state.nmck.capacity !== null && Number.isFinite(state.nmck.capacity);
+      const ok11 = state.nmck.vehiclePrice !== null && Number.isFinite(state.nmck.vehiclePrice);
+      const ok12 = state.nmck.lifetime !== null && Number.isFinite(state.nmck.lifetime);
+      const ok13 = state.nmck.contractPeriod !== null && Number.isFinite(state.nmck.contractPeriod);
+      const ok15 = state.nmck.subsidy !== null && Number.isFinite(state.nmck.subsidy);
+      const ok16 = isLettersOnly(state.nmck.climateZone);
+
+      if (showErrors) {
+        setError('err_nmck_route_number', !ok1);
+        setError('err_nmck_route_name', !ok2);
+        setError('err_nmck_vehicle_class', !ok3);
+        setError('err_nmck_route_type', !ok4);
+        setError('err_nmck_fuel_type', !ok6);
+        setError('err_nmck_contract_mileage', !ok7);
+        setError('err_nmck_qty_main', !ok8);
+        setError('err_nmck_qty_res', !ok9);
+        setError('err_nmck_capacity', !ok10);
+        setError('err_nmck_vehicle_price', !ok11);
+        setError('err_nmck_lifetime', !ok12);
+        setError('err_nmck_contract_period', !ok13);
+        setError('err_nmck_subsidy', !ok15);
+        setError('err_nmck_climate_zone', !ok16);
+      }
+
+      return ok1 && ok2 && ok3 && ok4 && ok6 && ok7 && ok8 && ok9 && ok10 && ok11 && ok12 && ok13 && ok15 && ok16;
+    }
+
+    function computeAll() {
+      // NMCK section 1
+      state.nmck.routeNumber = String(getInputValue('nmck_route_number') ?? '').trim();
+      state.nmck.routeName = String(getInputValue('nmck_route_name') ?? '').trim();
+      state.nmck.vehicleClass = String(getInputValue('nmck_vehicle_class') ?? '').trim().toLowerCase();
+      state.nmck.routeType = String(getInputValue('nmck_route_type') ?? '').trim().toLowerCase();
+      state.nmck.vehicleModel = String(getInputValue('nmck_vehicle_model') ?? '').trim();
+      state.nmck.fuelType = String(getInputValue('nmck_fuel_type') ?? '').trim().toLowerCase();
+      state.nmck.contractMileage = num(getInputValue('nmck_contract_mileage'));
+      state.nmck.qtyMain = num(getInputValue('nmck_qty_main'));
+      state.nmck.qtyRes = num(getInputValue('nmck_qty_res'));
+      state.nmck.capacity = num(getInputValue('nmck_capacity'));
+      state.nmck.vehiclePrice = num(getInputValue('nmck_vehicle_price'));
+      state.nmck.lifetime = num(getInputValue('nmck_lifetime'));
+      state.nmck.contractPeriod = num(getInputValue('nmck_contract_period'));
+      const plannedFareRaw = String(getInputValue('nmck_planned_fare') ?? '').trim();
+      state.nmck.plannedFare = plannedFareRaw ? num(plannedFareRaw) : null;
+      state.nmck.subsidy = num(getInputValue('nmck_subsidy'));
+      state.nmck.climateZone = String(getInputValue('nmck_climate_zone') ?? '').trim();
+
+      // NMCK sections 2-4
+      state.nmck.profitability = num(getInputValue('nmck_profitability')) ?? state.nmck.profitability;
+      state.nmck.vehicleResource = num(getInputValue('nmck_vehicle_resource')) ?? state.nmck.vehicleResource;
+      state.nmck.extraEquipmentCost = num(getInputValue('nmck_extra_equipment_cost')) ?? state.nmck.extraEquipmentCost;
+
+      state.nmck.cpiIndex = num(getInputValue('nmck_cpi_index')) ?? state.nmck.cpiIndex;
+      state.nmck.oilIndex = num(getInputValue('nmck_oil_index')) ?? state.nmck.oilIndex;
+      state.nmck.machineryIndex = num(getInputValue('nmck_machinery_index')) ?? state.nmck.machineryIndex;
+
+      state.nmck.prepCoeff = num(getInputValue('nmck_prep_coeff')) ?? state.nmck.prepCoeff;
+      state.nmck.climateTo = num(getInputValue('nmck_climate_to')) ?? state.nmck.climateTo;
+      state.nmck.climateRepair = num(getInputValue('nmck_climate_repair')) ?? state.nmck.climateRepair;
+      state.nmck.climateParts = num(getInputValue('nmck_climate_parts')) ?? state.nmck.climateParts;
+      state.nmck.otherCostsCoeff = num(getInputValue('nmck_other_costs_coeff')) ?? state.nmck.otherCostsCoeff;
+      state.nmck.driverSalaryCoeff = num(getInputValue('nmck_driver_salary_coeff')) ?? state.nmck.driverSalaryCoeff;
+      state.nmck.conductorCoeff = num(getInputValue('nmck_conductor_coeff')) ?? state.nmck.conductorCoeff;
+      state.nmck.socialRate = num(getInputValue('nmck_social_rate')) ?? state.nmck.socialRate;
+      state.nmck.fuelAdjustment = num(getInputValue('nmck_fuel_adjustment')) ?? state.nmck.fuelAdjustment;
+
+      // Editable FOT
       state.fot.driverSalaryRegion = num(getInputValue('fot_driver_salary_region')) ?? state.fot.driverSalaryRegion;
       state.fot.vacationCoeff = num(getInputValue('fot_vacation_coeff')) ?? state.fot.vacationCoeff;
       state.fot.plannedHours = num(getInputValue('fot_planned_hours')) ?? state.fot.plannedHours;
       state.fot.annualFund = num(getInputValue('fot_annual_fund')) ?? state.fot.annualFund;
 
-      // Validation: vacationCoeff must be [1, 1.15]
+      computeNmckDerived();
+      setInputValue('nmck_qty_total', state.nmck.qtyTotal);
+      setInputValue('nmck_mileage_utilization', state.nmck.mileageUtilization);
+
+      // FOT validation
       const errVac = document.getElementById('err_vacation_coeff');
-      const vac = state.fot.vacationCoeff;
-      const vacOk = vac !== null && vac >= 1 && vac <= 1.15;
+      const vacOk = state.fot.vacationCoeff !== null && state.fot.vacationCoeff >= 1 && state.fot.vacationCoeff <= 1.15;
       if (errVac) errVac.classList.toggle('show', !vacOk);
 
-      // Derived values
+      // FOT derived
       const kZp = state.nmck.driverSalaryCoeff;
       const kPz = state.nmck.prepCoeff;
       const ipc = state.nmck.cpiIndex;
@@ -735,7 +1265,7 @@
       setInputValue('fot_social_rate', sr);
 
       const salaryCalc = (state.fot.driverSalaryRegion ?? null) !== null && kZp !== null
-        ? round2((state.fot.driverSalaryRegion) * kZp)
+        ? round2(state.fot.driverSalaryRegion * kZp)
         : null;
       setInputValue('fot_driver_salary_calc', salaryCalc);
 
@@ -764,39 +1294,121 @@
 
       const srTi = (sr !== null && socialBase !== null) ? round2((sr * socialBase) / 100) : null;
       setInputValue('fot_sr_ti', srTi);
+
+      // NMCK section 5/6 using FOT + placeholders
+      setInputValue('nmck_cost_driver_labor', pOtvti);
+      setInputValue('nmck_cost_conductor_labor', pOtkti);
+      setInputValue('nmck_cost_social', srTi);
+      setInputValue('nmck_cost_fuel', 0);
+      setInputValue('nmck_cost_lubricants', 0);
+      setInputValue('nmck_cost_tires', 0);
+      setInputValue('nmck_cost_to_repair', 0);
+      setInputValue('nmck_cost_other', 0);
+      setInputValue('nmck_cost_extra_depr', 0);
+      setInputValue('nmck_cost_rent', 0);
+
+      const sumKm = (pOtvti !== null && pOtkti !== null && srTi !== null) ? round2(pOtvti + pOtkti + srTi) : null;
+      setInputValue('nmck_cost_per_km_total', sumKm);
+
+      const qtyTotal = state.nmck.qtyTotal;
+      const profit = state.nmck.profitability;
+      const perKmAll = (sumKm !== null && qtyTotal !== null && profit !== null) ? round2(sumKm * qtyTotal * profit) : null;
+      setInputValue('nmck_price_per_km_all_vehicles', perKmAll);
+
+      const totalCost = (perKmAll !== null && mileage !== null) ? round2(perKmAll * mileage) : null;
+      setInputValue('nmck_total_cost_full_mileage', totalCost);
+
+      const plannedFare = state.nmck.plannedFare ?? 0;
+      const subsidy = state.nmck.subsidy ?? 0;
+      setInputValue('nmck_minus_planned_fare', plannedFare);
+      setInputValue('nmck_minus_subsidy', subsidy);
+
+      const finalPrice = (totalCost !== null) ? round2(totalCost - plannedFare - subsidy) : null;
+      setInputValue('nmck_contract_price_final', finalPrice);
+
+      saveState();
     }
 
-    function loadDefaults() {
-      setInputValue('fot_driver_salary_region', state.fot.driverSalaryRegion);
-      setInputValue('fot_vacation_coeff', state.fot.vacationCoeff);
-      setInputValue('fot_planned_hours', state.fot.plannedHours);
-      setInputValue('fot_annual_fund', state.fot.annualFund);
-      compute();
+    const nmckBadge = document.getElementById('nmck_mode_badge');
+    const nmckAll = document.getElementById('nmck_all_sections');
+    const nmckResultsCard = document.getElementById('nmck_calc_results');
+    const nmckResultsText = document.getElementById('nmck_results_text');
+
+    function setNmckMode(mode) {
+      state.ui.nmckMode = mode;
+      if (nmckBadge) nmckBadge.textContent = mode === 'edit' ? 'режим: корректировка' : 'режим: расчёт';
+      if (nmckAll) nmckAll.classList.toggle('hidden', mode !== 'edit');
+      if (nmckResultsCard) nmckResultsCard.classList.toggle('hidden', mode === 'edit');
+      saveState();
     }
+
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-go]');
+      if (!btn) return;
+      e.preventDefault();
+      const target = btn.getAttribute('data-go');
+      if (!target) return;
+
+      // Handle nmck mode before opening page
+      if (target === 'page-nmck') {
+        const explicitMode = btn.getAttribute('data-nmck-mode');
+        if (explicitMode === 'edit') setNmckMode('edit');
+        else setNmckMode('calc');
+      }
+
+      showPage(target);
+    });
 
     document.addEventListener('input', (e) => {
       const id = e.target && e.target.id;
       if (!id) return;
-      if (
-        id.startsWith('nmck_') ||
-        id.startsWith('fot_driver_salary_region') ||
-        id.startsWith('fot_vacation_coeff') ||
-        id.startsWith('fot_planned_hours') ||
-        id.startsWith('fot_annual_fund')
-      ) {
-        compute();
+      if (id.startsWith('nmck_') || id.startsWith('fot_')) {
+        computeAll();
       }
     });
 
     const btnSave = document.getElementById('btn_save_fot');
     if (btnSave) {
       btnSave.addEventListener('click', () => {
-        // Пока что просто пересчитываем (в будущем можно сохранять в localStorage).
-        compute();
+        computeAll();
       });
     }
 
-    loadDefaults();
+    const btnCalc = document.getElementById('btn_nmck_calculate');
+    if (btnCalc) {
+      btnCalc.addEventListener('click', () => {
+        computeAll();
+        const ok = validateSection1(true);
+        if (!nmckResultsCard || !nmckResultsText) return;
+        nmckResultsCard.classList.remove('hidden');
+        if (!ok) {
+          nmckResultsText.textContent = 'Есть ошибки в разделе 1. Исправьте подсвеченные поля и нажмите «Рассчитать» ещё раз.';
+          return;
+        }
+        const costPerKm = num(getInputValue('nmck_cost_per_km_total'));
+        const perKmAll = num(getInputValue('nmck_price_per_km_all_vehicles'));
+        const totalCost = num(getInputValue('nmck_total_cost_full_mileage'));
+        const finalPrice = num(getInputValue('nmck_contract_price_final'));
+        nmckResultsText.textContent =
+          `Маршрут: ${state.nmck.routeNumber} — ${state.nmck.routeName}\n` +
+          `ТС: ${state.nmck.vehicleClass}, ${state.nmck.routeType}, топливо: ${state.nmck.fuelType}\n` +
+          `Пробег по контракту: ${state.nmck.contractMileage ?? '-'}\n` +
+          `Количество ТС итого: ${state.nmck.qtyTotal ?? '-'}\n\n` +
+          `Макс. стоимость 1 км: ${costPerKm ?? '-'}\n` +
+          `На 1 км с учетом всех ТС: ${perKmAll ?? '-'}\n` +
+          `Общая стоимость на весь пробег: ${totalCost ?? '-'}\n` +
+          `Итоговая цена контракта: ${finalPrice ?? '-'}`;
+      });
+    }
+
+    loadState();
+    renderNmck();
+    setInputValue('fot_driver_salary_region', state.fot.driverSalaryRegion);
+    setInputValue('fot_vacation_coeff', state.fot.vacationCoeff);
+    setInputValue('fot_planned_hours', state.fot.plannedHours);
+    setInputValue('fot_annual_fund', state.fot.annualFund);
+    setNmckMode(state.ui.nmckMode || 'calc');
+    computeAll();
   </script>
 </body>
 </html>
