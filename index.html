@@ -244,6 +244,26 @@
       box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.5);
       background: #020617;
     }
+    .field input[readonly] {
+      opacity: 0.92;
+      border-style: dashed;
+      border-color: rgba(56, 189, 248, 0.45);
+      color: rgba(229, 231, 235, 0.92);
+    }
+    .hint {
+      font-size: 11px;
+      color: rgba(148, 163, 184, 0.85);
+      line-height: 1.45;
+    }
+    .error {
+      font-size: 11px;
+      color: var(--error);
+      line-height: 1.45;
+      display: none;
+    }
+    .error.show {
+      display: block;
+    }
     .footer {
       padding: 8px 14px 12px;
       border-top: 1px solid rgba(30, 64, 175, 0.5);
@@ -379,12 +399,59 @@
       <section id="page-nmck" class="page">
         <div class="section-title">
           <span>Расчёт НМЦК</span>
-          <span class="small">Скоро здесь будет формула</span>
+          <span class="small">Источник коэффициентов для ФОТ</span>
         </div>
         <div class="card">
-          <p style="font-size:13px; color:var(--muted); line-height:1.5;">
-            Здесь будет форма и результаты расчёта НМЦК по введённым данным.
-          </p>
+          <div class="fields">
+            <div class="field">
+              <label>
+                <span class="left">4. Коэффициенты… — Коэфф. к зарплате водителя</span>
+                <span class="index">k_zp</span>
+              </label>
+              <input id="nmck_driver_salary_coeff" type="number" inputmode="decimal" step="0.01" placeholder="Например, 1.00" />
+            </div>
+
+            <div class="field">
+              <label>
+                <span class="left">4. Коэффициенты… — Коэфф. подгот.-заключ. времени</span>
+                <span class="index">k_pz</span>
+              </label>
+              <input id="nmck_prep_coeff" type="number" inputmode="decimal" step="0.01" placeholder="Например, 1.10" />
+            </div>
+
+            <div class="field">
+              <label>
+                <span class="left">3. Индексы… — Индекс потребительских цен</span>
+                <span class="index">ipc</span>
+              </label>
+              <input id="nmck_cpi_index" type="number" inputmode="decimal" step="0.01" placeholder="Например, 1.08" />
+            </div>
+
+            <div class="field">
+              <label>
+                <span class="left">1. Исходные данные… — Пробег по контракту</span>
+                <span class="index">L</span>
+              </label>
+              <input id="nmck_contract_mileage" type="number" inputmode="numeric" placeholder="км" />
+            </div>
+
+            <div class="field">
+              <label>
+                <span class="left">4. Коэффициенты… — Коэфф. за функции кондуктора</span>
+                <span class="index">k_kond</span>
+              </label>
+              <input id="nmck_conductor_coeff" type="number" inputmode="decimal" step="0.01" placeholder="Например, 0.00 или 1.00" />
+              <div class="hint">Этот коэффициент используется в разделе ФОТ 2.2.</div>
+            </div>
+
+            <div class="field">
+              <label>
+                <span class="left">4. Коэффициенты… — Ставка соц. отчислений</span>
+                <span class="index">sr %</span>
+              </label>
+              <input id="nmck_social_rate" type="number" inputmode="decimal" step="0.01" placeholder="Например, 30" />
+            </div>
+          </div>
         </div>
         <button class="btn btn-ghost" data-go="page-main">
           ← Назад в главное меню
@@ -404,63 +471,68 @@
               <label>
                 <span class="left"><span class="index">1.</span> Средняя з/п водителя по региону</span>
               </label>
-              <input type="number" inputmode="decimal" placeholder="Например, 75 000" />
+              <input id="fot_driver_salary_region" type="number" inputmode="numeric" placeholder="87133" />
             </div>
 
             <div class="field">
               <label>
                 <span class="left"><span class="index">2.</span> Коэфф. к з/п водителя</span>
               </label>
-              <input type="number" inputmode="decimal" step="0.01" placeholder="Например, 1.2" />
+              <input id="fot_driver_salary_coeff" type="number" inputmode="decimal" step="0.01" placeholder="Берётся из НМЦК" readonly />
+              <div class="hint">Источник: «Расчёт НМЦК → 4. Коэффициенты… → Коэфф. к зарплате водителя»</div>
             </div>
 
             <div class="field">
               <label>
                 <span class="left"><span class="index">3.</span> Средняя з/п водителя для расчёта</span>
               </label>
-              <input type="number" inputmode="decimal" placeholder="Рассчитанное значение" />
+              <input id="fot_driver_salary_calc" type="number" inputmode="decimal" placeholder="Авторасчёт" readonly />
             </div>
 
             <div class="field">
               <label>
                 <span class="left"><span class="index">4.</span> Коэфф. отпуска</span>
               </label>
-              <input type="number" inputmode="decimal" step="0.01" placeholder="Например, 1.33" />
+              <input id="fot_vacation_coeff" type="number" inputmode="decimal" step="0.01" min="1" max="1.15" placeholder="1.00" />
+              <div id="err_vacation_coeff" class="error">Допустимый диапазон: от 1 до 1,15</div>
             </div>
 
             <div class="field">
               <label>
                 <span class="left"><span class="index">5.</span> Планируемые часы работы</span>
               </label>
-              <input type="number" inputmode="numeric" placeholder="Часы в год" />
+              <input id="fot_planned_hours" type="number" inputmode="numeric" placeholder="182" />
             </div>
 
             <div class="field">
               <label>
                 <span class="left"><span class="index">6.</span> Коэфф. подг.-заключ. времени</span>
               </label>
-              <input type="number" inputmode="decimal" step="0.01" placeholder="Например, 1.1" />
+              <input id="fot_prep_coeff" type="number" inputmode="decimal" step="0.01" placeholder="Берётся из НМЦК" readonly />
+              <div class="hint">Источник: «Расчёт НМЦК → 4. Коэффициенты… → Коэфф. подгот.-заключ. времени»</div>
             </div>
 
             <div class="field">
               <label>
                 <span class="left"><span class="index">7.</span> Индекс потреб. цен</span>
               </label>
-              <input type="number" inputmode="decimal" step="0.01" placeholder="Например, 1.08" />
+              <input id="fot_cpi_index" type="number" inputmode="decimal" step="0.01" placeholder="Берётся из НМЦК" readonly />
+              <div class="hint">Источник: «Расчёт НМЦК → 3. Индексы… → Индекс потребительских цен»</div>
             </div>
 
             <div class="field">
               <label>
                 <span class="left"><span class="index">8.</span> Пробег по контракту</span>
               </label>
-              <input type="number" inputmode="numeric" placeholder="км" />
+              <input id="fot_contract_mileage" type="number" inputmode="numeric" placeholder="Берётся из НМЦК" readonly />
+              <div class="hint">Источник: «Расчёт НМЦК → 1. Исходные данные… → Пробег по контракту»</div>
             </div>
 
             <div class="field">
               <label>
                 <span class="left"><span class="index">9.</span> Годовой фонд раб. времени</span>
               </label>
-              <input type="number" inputmode="numeric" placeholder="часы" />
+              <input id="fot_annual_fund" type="number" inputmode="numeric" placeholder="1772" />
             </div>
 
             <div class="field">
@@ -468,7 +540,79 @@
                 <span class="left"><span class="index">10.</span> ИТОГО P_OTVti</span>
                 <span class="index">итоговая сумма</span>
               </label>
-              <input type="number" inputmode="decimal" placeholder="Будет рассчитано формулой" />
+              <input id="fot_p_otvti" type="number" inputmode="decimal" placeholder="Авторасчёт" readonly />
+              <div class="hint">Формула: (12 * ЗП_расч * k_отпуска * часы * k_пз * IPC) / (пробег * фонд)</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title">
+          <span>2.2. Расходы на оплату труда кондукторов</span>
+          <span class="small">ФОТ</span>
+        </div>
+
+        <div class="card">
+          <div class="fields">
+            <div class="field">
+              <label>
+                <span class="left"><span class="index">1.</span> Водитель выполняет ф-ции кондуктора</span>
+                <span class="index">k_kond</span>
+              </label>
+              <input id="fot_conductor_coeff" type="number" inputmode="decimal" step="0.01" placeholder="Берётся из НМЦК" readonly />
+              <div class="hint">Источник: «Расчёт НМЦК → 4. Коэффициенты… → Коэфф. за функции кондуктора»</div>
+            </div>
+
+            <div class="field">
+              <label>
+                <span class="left"><span class="index">2.</span> Расходы на ОТ водителей</span>
+                <span class="index">P_OTVti</span>
+              </label>
+              <input id="fot_p_otvti_copy" type="number" inputmode="decimal" placeholder="Авто" readonly />
+            </div>
+
+            <div class="field">
+              <label>
+                <span class="left"><span class="index">3.</span> ИТОГО P_OTKti</span>
+                <span class="index">P_OTKti</span>
+              </label>
+              <input id="fot_p_otkti" type="number" inputmode="decimal" placeholder="Авторасчёт" readonly />
+              <div class="hint">Формула: k_kond * P_OTVti</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title">
+          <span>2.3. Социальные отчисления</span>
+          <span class="small">ФОТ</span>
+        </div>
+
+        <div class="card">
+          <div class="fields">
+            <div class="field">
+              <label>
+                <span class="left"><span class="index">1.</span> Ставка соц. отчислений</span>
+                <span class="index">sr %</span>
+              </label>
+              <input id="fot_social_rate" type="number" inputmode="decimal" step="0.01" placeholder="Берётся из НМЦК" readonly />
+              <div class="hint">Источник: «Расчёт НМЦК → 4. Коэффициенты… → Ставка соц. отчислений»</div>
+            </div>
+
+            <div class="field">
+              <label>
+                <span class="left"><span class="index">2.</span> База для начисления</span>
+                <span class="index">base</span>
+              </label>
+              <input id="fot_social_base" type="number" inputmode="decimal" placeholder="Авторасчёт" readonly />
+              <div class="hint">Формула: P_OTVti + P_OTKti</div>
+            </div>
+
+            <div class="field">
+              <label>
+                <span class="left"><span class="index">3.</span> ИТОГО SR_ti</span>
+                <span class="index">SR_ti</span>
+              </label>
+              <input id="fot_sr_ti" type="number" inputmode="decimal" placeholder="Авторасчёт" readonly />
+              <div class="hint">Формула: (sr * base) / 100</div>
             </div>
           </div>
         </div>
@@ -477,7 +621,7 @@
           <button class="btn btn-ghost" data-go="page-edit">
             ← Назад к разделам
           </button>
-          <button class="btn btn-primary">
+          <button class="btn btn-primary" id="btn_save_fot" type="button">
             <span class="label">
               <span class="icon">💾</span>
               <span>Сохранить</span>
@@ -508,6 +652,151 @@
       const target = btn.getAttribute('data-go');
       if (target) showPage(target);
     });
+
+    const state = {
+      nmck: {
+        driverSalaryCoeff: null,
+        prepCoeff: null,
+        cpiIndex: null,
+        contractMileage: null,
+        conductorCoeff: null,
+        socialRate: null,
+      },
+      fot: {
+        driverSalaryRegion: 87133,
+        vacationCoeff: 1,
+        plannedHours: 182,
+        annualFund: 1772,
+      }
+    };
+
+    function num(v) {
+      if (v === null || v === undefined) return null;
+      const s = String(v).trim().replace(/\s+/g, '').replace(',', '.');
+      if (!s) return null;
+      const x = Number(s);
+      return Number.isFinite(x) ? x : null;
+    }
+
+    function setInputValue(id, value) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.value = value === null || value === undefined ? '' : String(value);
+    }
+
+    function getInputValue(id) {
+      const el = document.getElementById(id);
+      if (!el) return null;
+      return el.value;
+    }
+
+    function clamp(x, a, b) {
+      return Math.min(b, Math.max(a, x));
+    }
+
+    function round2(x) {
+      return Math.round((x + Number.EPSILON) * 100) / 100;
+    }
+
+    function compute() {
+      // Pull NMCK sources from inputs into state
+      state.nmck.driverSalaryCoeff = num(getInputValue('nmck_driver_salary_coeff'));
+      state.nmck.prepCoeff = num(getInputValue('nmck_prep_coeff'));
+      state.nmck.cpiIndex = num(getInputValue('nmck_cpi_index'));
+      state.nmck.contractMileage = num(getInputValue('nmck_contract_mileage'));
+      state.nmck.conductorCoeff = num(getInputValue('nmck_conductor_coeff'));
+      state.nmck.socialRate = num(getInputValue('nmck_social_rate'));
+
+      // Pull editable FOT fields
+      state.fot.driverSalaryRegion = num(getInputValue('fot_driver_salary_region')) ?? state.fot.driverSalaryRegion;
+      state.fot.vacationCoeff = num(getInputValue('fot_vacation_coeff')) ?? state.fot.vacationCoeff;
+      state.fot.plannedHours = num(getInputValue('fot_planned_hours')) ?? state.fot.plannedHours;
+      state.fot.annualFund = num(getInputValue('fot_annual_fund')) ?? state.fot.annualFund;
+
+      // Validation: vacationCoeff must be [1, 1.15]
+      const errVac = document.getElementById('err_vacation_coeff');
+      const vac = state.fot.vacationCoeff;
+      const vacOk = vac !== null && vac >= 1 && vac <= 1.15;
+      if (errVac) errVac.classList.toggle('show', !vacOk);
+
+      // Derived values
+      const kZp = state.nmck.driverSalaryCoeff;
+      const kPz = state.nmck.prepCoeff;
+      const ipc = state.nmck.cpiIndex;
+      const mileage = state.nmck.contractMileage;
+      const kKond = state.nmck.conductorCoeff;
+      const sr = state.nmck.socialRate;
+
+      setInputValue('fot_driver_salary_coeff', kZp);
+      setInputValue('fot_prep_coeff', kPz);
+      setInputValue('fot_cpi_index', ipc);
+      setInputValue('fot_contract_mileage', mileage);
+      setInputValue('fot_conductor_coeff', kKond);
+      setInputValue('fot_social_rate', sr);
+
+      const salaryCalc = (state.fot.driverSalaryRegion ?? null) !== null && kZp !== null
+        ? round2((state.fot.driverSalaryRegion) * kZp)
+        : null;
+      setInputValue('fot_driver_salary_calc', salaryCalc);
+
+      let pOtvti = null;
+      if (
+        salaryCalc !== null &&
+        vacOk &&
+        state.fot.plannedHours !== null &&
+        kPz !== null &&
+        ipc !== null &&
+        mileage !== null && mileage !== 0 &&
+        state.fot.annualFund !== null && state.fot.annualFund !== 0
+      ) {
+        pOtvti = (12 * salaryCalc * state.fot.vacationCoeff * state.fot.plannedHours * kPz * ipc) /
+          (mileage * state.fot.annualFund);
+        pOtvti = round2(pOtvti);
+      }
+      setInputValue('fot_p_otvti', pOtvti);
+      setInputValue('fot_p_otvti_copy', pOtvti);
+
+      const pOtkti = (kKond !== null && pOtvti !== null) ? round2(kKond * pOtvti) : null;
+      setInputValue('fot_p_otkti', pOtkti);
+
+      const socialBase = (pOtvti !== null && pOtkti !== null) ? round2(pOtvti + pOtkti) : null;
+      setInputValue('fot_social_base', socialBase);
+
+      const srTi = (sr !== null && socialBase !== null) ? round2((sr * socialBase) / 100) : null;
+      setInputValue('fot_sr_ti', srTi);
+    }
+
+    function loadDefaults() {
+      setInputValue('fot_driver_salary_region', state.fot.driverSalaryRegion);
+      setInputValue('fot_vacation_coeff', state.fot.vacationCoeff);
+      setInputValue('fot_planned_hours', state.fot.plannedHours);
+      setInputValue('fot_annual_fund', state.fot.annualFund);
+      compute();
+    }
+
+    document.addEventListener('input', (e) => {
+      const id = e.target && e.target.id;
+      if (!id) return;
+      if (
+        id.startsWith('nmck_') ||
+        id.startsWith('fot_driver_salary_region') ||
+        id.startsWith('fot_vacation_coeff') ||
+        id.startsWith('fot_planned_hours') ||
+        id.startsWith('fot_annual_fund')
+      ) {
+        compute();
+      }
+    });
+
+    const btnSave = document.getElementById('btn_save_fot');
+    if (btnSave) {
+      btnSave.addEventListener('click', () => {
+        // Пока что просто пересчитываем (в будущем можно сохранять в localStorage).
+        compute();
+      });
+    }
+
+    loadDefaults();
   </script>
 </body>
 </html>
