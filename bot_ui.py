@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, WebAppInfo
 from telegram.ext import (
     Application,
     CallbackQueryHandler,
@@ -434,6 +434,30 @@ async def handle_climate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     return ConversationHandler.END
 
 
+async def webapp_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    webapp_url = os.getenv("WEBAPP_URL", "").strip()
+    if not webapp_url:
+        await update.message.reply_text(
+            "Не задано `WEBAPP_URL`. Укажите URL мини‑приложения (например, https://ваш-сервер/).",
+            parse_mode="Markdown",
+        )
+        return
+
+    keyboard = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "Открыть расчет НМЦК",
+                    web_app=WebAppInfo(url=webapp_url),
+                )
+            ]
+        ]
+    )
+    user = update.effective_user
+    text = format_welcome(user.first_name if user else None)
+    await update.message.reply_text(text, reply_markup=keyboard)
+
+
 def main() -> None:
     token = os.getenv("BOT_TOKEN")
     if not token:
@@ -441,34 +465,7 @@ def main() -> None:
 
     app = Application.builder().token(token).build()
 
-    app.add_handler(CommandHandler("start", start))
-
-    conv = ConversationHandler(
-        entry_points=[
-            CallbackQueryHandler(start_template_flow, pattern=f"^{CB_TEMPLATE}$"),
-        ],
-        states={
-            ROUTE_NUMBER: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_route_number)],
-            ROUTE_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_route_name)],
-            CLASS_TS: [CallbackQueryHandler(handle_class_ts, pattern=f"^{CB_CLASS_PREFIX}")],
-            ROUTE_TYPE: [CallbackQueryHandler(handle_route_type, pattern=f"^{CB_ROUTE_TYPE_PREFIX}")],
-            MODEL_TS: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_model_ts)],
-            FUEL_TYPE: [CallbackQueryHandler(handle_fuel_type, pattern=f"^{CB_FUEL_PREFIX}")],
-            MILEAGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_mileage)],
-            QTY_MAIN: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_qty_main)],
-            QTY_RES: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_qty_res)],
-            CAPACITY: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_capacity)],
-            PRICE: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_price)],
-            LIFETIME: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_lifetime)],
-            CONTRACT_PERIOD: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_contract_period)],
-            FARE: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_fare)],
-            SUBSIDY: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_subsidy)],
-            CLIMATE: [CallbackQueryHandler(handle_climate, pattern=f"^{CB_CLIMATE_PREFIX}")],
-        },
-        fallbacks=[CommandHandler("start", start)],
-    )
-
-    app.add_handler(conv)
+    app.add_handler(CommandHandler("start", webapp_start))
 
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 

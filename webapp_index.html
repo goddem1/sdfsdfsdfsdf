@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ИИ-ассистент "РасчетПоездок"</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .form-section, .chat-section, .result-section {
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .chat-container {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: #fafafa;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        .message.user {
+            background-color: #e3f2fd;
+            margin-left: 20%;
+            text-align: right;
+        }
+        .message.raschetpoezdok {
+            background-color: #e8f5e8;
+            margin-right: 20%;
+        }
+        .chat-input {
+            display: flex;
+        }
+        .chat-input input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 0 0 4px 4px;
+        }
+        .chat-input button {
+            border-radius: 0;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted black;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 300px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -150px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        .result-section {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .result-table th, .result-table td {
+            border: 1px solid #aaa;
+            padding: 8px;
+            text-align: left;
+        }
+        .result-table th {
+            background-color: #eee;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>ИИ-ассистент "РасчетПоездок"</h1>
+    <p>Расчет для регулярных перевозок пассажиров и багажа (нетто-модель, оплату получает перевозчик)</p>
+
+    <!-- Форма ввода данных -->
+    <div class="form-section">
+        <h2>Ввод данных</h2>
+        <form id="calcForm">
+            <h3>БЛОК 1. ИСХОДНЫЕ ДАННЫЕ МАРШРУТА И КОНТРАКТА</h3>
+            <div class="form-group">
+                <label for="routeNumber">Номер маршрута <span class="tooltip">?<span class="tooltiptext">Номер маршрута из реестра</span></span></label>
+                <input type="text" id="routeNumber" name="routeNumber" value="263">
+            </div>
+            <div class="form-group">
+                <label for="routeName">Наименование маршрута <span class="tooltip">?<span class="tooltiptext">Полное наименование</span></span></label>
+                <input type="text" id="routeName" name="routeName" value="Усть-Илимск - Бадарминск">
+            </div>
+            <div class="form-group">
+                <label for="vehicleClass">Класс ТС <span class="tooltip">?<span class="tooltiptext">особо малый/малый/средний/большой/особо большой</span></span></label>
+                <select id="vehicleClass" name="vehicleClass">
+                    <option value="Особо малый">Особо малый</option>
+                    <option value="Малый" selected>Малый</option>
+                    <option value="Средний">Средний</option>
+                    <option value="Большой">Большой</option>
+                    <option value="Особо большой">Особо большой</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="routeType">Тип маршрута <span class="tooltip">?<span class="tooltiptext">городской/пригородный/межмуниципальный</span></span></label>
+                <select id="routeType" name="routeType">
+                    <option value="Городской">Городской</option>
+                    <option value="Пригородный" selected>Пригородный</option>
+                    <option value="Межмуниципальный">Межмуниципальный</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="model">Модель ТС <span class="tooltip">?<span class="tooltiptext">Марка и модель автобуса</span></span></label>
+                <input type="text" id="model" name="model" value="ГАЗ A65R33">
+            </div>
+            <div class="form-group">
+                <label for="fuelType">Тип топлива <span class="tooltip">?<span class="tooltiptext">бензин/дизель/газ/электро</span></span></label>
+                <select id="fuelType" name="fuelType">
+                    <option value="Бензин" selected>Бензин</option>
+                    <option value="Дизель">Дизель</option>
+                    <option value="Газ">Газ</option>
+                    <option value="Электро">Электро</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="contractRun">Пробег по контракту (км) <span class="tooltip">?<span class="tooltiptext">Планируемый пробег за период контракта</span></span></label>
+                <input type="number" step="any" id="contractRun" name="contractRun" value="7872.8">
+            </div>
+            <div class="form-group">
+                <label for="mainVehicles">Количество ТС (основное) <span class="tooltip">?<span class="tooltiptext">Максимальное количество ТС на маршруте</span></span></label>
+                <input type="number" step="1" id="mainVehicles" name="mainVehicles" value="1">
+            </div>
+            <div class="form-group">
+                <label for="seatingCapacity">Вместимость ТС (мест) <span class="tooltip">?<span class="tooltiptext">Максимальная вместимость автобуса</span></span></label>
+                <input type="number" step="1" id="seatingCapacity" name="seatingCapacity" value="17">
+            </div>
+            <div class="form-group">
+                <label for="vehiclePrice">Цена ТС (руб.) <span class="tooltip">?<span class="tooltiptext">Средняя цена для данного класса и типа</span></span></label>
+                <input type="number" step="any" id="vehiclePrice" name="vehiclePrice" value="4105500">
+            </div>
+            <div class="form-group">
+                <label for="serviceLife">Срок службы ТС (лет) <span class="tooltip">?<span class="tooltiptext">Норматив срока полезного использования</span></span></label>
+                <input type="number" step="1" id="serviceLife" name="serviceLife" value="5">
+            </div>
+            <div class="form-group">
+                <label for="contractPeriod">Период контракта (мес.) <span class="tooltip">?<span class="tooltiptext">Количество месяцев исполнения контракта</span></span></label>
+                <input type="number" step="1" id="contractPeriod" name="contractPeriod" value="3">
+            </div>
+            <div class="form-group">
+                <label for="plannedFare">Планируемая плата за проезд (руб.) <span class="tooltip">?<span class="tooltiptext">См. лист "7. ПЛАТА ЗА ПРОЕЗД"</span></span></label>
+                <input type="number" step="any" id="plannedFare" name="plannedFare" value="374686.73">
+            </div>
+            <div class="form-group">
+                <label for="subsidies">Субсидии (руб.) <span class="tooltip">?<span class="tooltiptext">Размер субсидий по региональному законодательству</span></span></label>
+                <input type="number" step="any" id="subsidies" name="subsidies" value="0">
+            </div>
+            <div class="form-group">
+                <label for="climateZone">Климатическая зона <span class="tooltip">?<span class="tooltiptext">Умеренная/Умеренно холодная/Холодная</span></span></label>
+                <select id="climateZone" name="climateZone">
+                    <option value="Умеренная" selected>Умеренная</option>
+                    <option value="Умеренно холодная">Умеренно холодная</option>
+                    <option value="Холодная">Холодная</option>
+                </select>
+            </div>
+
+            <h3>БЛОК 2. ПАРАМЕТРЫ ТС И ЭКСПЛУАТАЦИИ</h3>
+            <div class="form-group">
+                <label for="profitabilityLevel">Уровень рентабельности (R) <span class="tooltip">?<span class="tooltiptext">1,096 для периода после 01.01.2022; 1,1107 возможно с 2026</span></span></label>
+                <input type="number" step="any" id="profitabilityLevel" name="profitabilityLevel" value="1.096">
+            </div>
+            <div class="form-group">
+                <label for="utilizationCoefficient">Коэфф. использования пробега (β) <span class="tooltip">?<span class="tooltiptext">0,91 для пригородных; 0,87 для городских; 0,5 для междугородных</span></span></label>
+                <input type="number" step="any" id="utilizationCoefficient" name="utilizationCoefficient" value="0.91">
+            </div>
+            <div class="form-group">
+                <label for="resourceUntilWriteOff">Ресурс ТС до списания (км) <span class="tooltip">?<span class="tooltiptext">640 000 км для малого класса; см. таблицу нормативов</span></span></label>
+                <input type="number" step="any" id="resourceUntilWriteOff" name="resourceUntilWriteOff" value="640000">
+            </div>
+            <div class="form-group">
+                <label for="additionalEquipmentCost">Затраты на доп. оборудование (руб.) <span class="tooltip">?<span class="tooltiptext">ККТ, АСОПК, информ. табло, видеорегистратор и т.п.</span></span></label>
+                <input type="number" step="any" id="additionalEquipmentCost" name="additionalEquipmentCost" value="6399">
+            </div>
+
+            <h3>БЛОК 3. ИНДЕКСЫ ЦЕНОВЫЕ (РЕГИОНАЛЬНЫЕ)</h3>
+            <div class="form-group">
+                <label for="consumerPriceIndex">Индекс потребительских цен (I_пцt) <span class="tooltip">?<span class="tooltiptext">Индекс для зарплат; прогноз на год контракта по региону</span></span></label>
+                <input type="number" step="any" id="consumerPriceIndex" name="consumerPriceIndex" value="1.051">
+            </div>
+            <div class="form-group">
+                <label for="fuelPriceIndex">Индекс цен нефтепродуктов (I_tt) <span class="tooltip">?<span class="tooltiptext">Индекс для топлива; прогноз на год контракта по региону</span></span></label>
+                <input type="number" step="any" id="fuelPriceIndex" name="fuelPriceIndex" value="1.046">
+            </div>
+            <div class="form-group">
+                <label for="equipmentPriceIndex">Индекс цен машин/оборудования (I_mt) <span class="tooltip">?<span class="tooltiptext">Накопленный индекс для шин и запчастей по региону</span></span></label>
+                <input type="number" step="any" id="equipmentPriceIndex" name="equipmentPriceIndex" value="2.0334">
+            </div>
+
+            <h3>БЛОК 4. КОЭФФИЦИЕНТЫ ЭКСПЛУАТАЦИОННЫЕ И КЛИМАТИЧЕСКИЕ</h3>
+            <div class="form-group">
+                <label for="prepCloseTimeCoeff">Коэфф. подгот.-заключ. времени (k_пз) <span class="tooltip">?<span class="tooltiptext">1,06 при видеонабл.+безнал+медосмотр; базовое 1,0</span></span></label>
+                <input type="number" step="any" id="prepCloseTimeCoeff" name="prepCloseTimeCoeff" value="1.06">
+            </div>
+            <div class="form-group">
+                <label for="climateCoeffTO">Коэфф. климата (ТО) (K_то) <span class="tooltip">?<span class="tooltiptext">0,9 для умеренного климата; 1,2 для Крайнего Севера</span></span></label>
+                <input type="number" step="any" id="climateCoeffTO" name="climateCoeffTO" value="1.00">
+            </div>
+            <div class="form-group">
+                <label for="climateCoeffRepair">Коэфф. климата (ремонт) (K_кр) <span class="tooltip">?<span class="tooltiptext">1,0-1,25 в зависимости от тяжести условий</span></span></label>
+                <input type="number" step="any" id="climateCoeffRepair" name="climateCoeffRepair" value="1.00">
+            </div>
+            <div class="form-group">
+                <label for="climateCoeffSpareParts">Коэфф. климата (запчасти) (K_зч) <span class="tooltip">?<span class="tooltiptext">1,0-1,25 в зависимости от климата</span></span></label>
+                <input type="number" step="any" id="climateCoeffSpareParts" name="climateCoeffSpareParts" value="1.00">
+            </div>
+            <div class="form-group">
+                <label for="otherExpensesCoeff">Коэфф. прочих расходов (K_пр) <span class="tooltip">?<span class="tooltiptext">Зависит от общего годового пробега; см. таблицу в 402</span></span></label>
+                <input type="number" step="any" id="otherExpensesCoeff" name="otherExpensesCoeff" value="0.755">
+            </div>
+            <div class="form-group">
+                <label for="driverSalaryCoeff">Коэфф. к зарплате водителя (K_зпi) <span class="tooltip">?<span class="tooltiptext">1,0-1,2 в зависимости от класса ТС и типа маршрута</span></span></label>
+                <input type="number" step="any" id="driverSalaryCoeff" name="driverSalaryCoeff" value="1.15">
+            </div>
+            <div class="form-group">
+                <label for="ticketFunctionCoeff">Коэфф. за функции кондуктора (k_бил) <span class="tooltip">?<span class="tooltiptext">0,3 без АСОП; 0,15 с частичной АСОП; 0 с полной АСОП</span></span></label>
+                <input type="number" step="any" id="ticketFunctionCoeff" name="ticketFunctionCoeff" value="0.3">
+            </div>
+            <div class="form-group">
+                <label for="socialContributionRate">Ставка соц. отчислений (St_c) <span class="tooltip">?<span class="tooltiptext">ПФР 22% + ФСС 2,9% + ФОМС 5,1% + травматизм ~0,8%</span></span></label>
+                <input type="number" step="any" id="socialContributionRate" name="socialContributionRate" value="30.8">
+            </div>
+            <div class="form-group">
+                <label for="fuelConsumptionCorrection">Поправка расхода топлива <span class="tooltip">?<span class="tooltiptext">0-20% в зависимости от сезона и условий эксплуатации</span></span></label>
+                <input type="number" step="any" id="fuelConsumptionCorrection" name="fuelConsumptionCorrection" value="6">
+            </div>
+
+            <button type="submit">Рассчитать НМЦК</button>
+        </form>
+    </div>
+
+    <!-- Блок результатов -->
+    <div class="result-section" id="resultSection">
+        <h2>Результаты расчета</h2>
+        <p><strong>ИТОГО: Максимальная стоимость 1 км (C):</strong> <span id="costPerKmResult">-</span> руб./км</p>
+        <p><strong>НАЧАЛЬНАЯ (МАКСИМАЛЬНАЯ) ЦЕНА КОНТРАКТА (НМЦК):</strong> <span id="nmckResult">-</span> руб.</p>
+        <table class="result-table">
+            <thead>
+                <tr>
+                    <th>Статья затрат</th>
+                    <th>Значение (руб./км)</th>
+                </tr>
+            </thead>
+            <tbody id="resultsTableBody">
+                <!-- Результаты будут вставлены сюда -->
+            </tbody>
+        </table>
+        <button onclick="downloadReport()">Скачать отчет (Excel)</button>
+    </div>
+
+    <!-- Чат с РасчетПоездок -->
+    <div class="chat-section">
+        <h2>Чат с ИИ-ассистентом "РасчетПоездок"</h2>
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <div class="message raschetpoezdok">Привет! Я РасчетПоездок, ваш помощник по расчету НМЦК. Задайте вопрос о расчете или параметрах.</div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="userInput" placeholder="Введите ваш вопрос..." onkeypress="if(event.key==='Enter') sendMessage();">
+                <button onclick="sendMessage()">Отправить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Храним последние результаты расчета
+    let lastCalculationResults = null;
+
+    // API base: если страница и API на одном домене — будет работать сразу
+    const apiBase = (new URLSearchParams(window.location.search)).get('apiBase') || window.location.origin;
+
+    // Обработчик отправки формы
+    document.getElementById('calcForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+            const response = await fetch(`${apiBase}/api/calculate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                lastCalculationResults = result;
+
+                document.getElementById('costPerKmResult').textContent = result.summary.cost_per_km.toFixed(2);
+                document.getElementById('nmckResult').textContent = result.summary.nmck_total.toFixed(2);
+
+                const resultsTableBody = document.getElementById('resultsTableBody');
+                resultsTableBody.innerHTML = '';
+
+                const resultItems = [
+                    { name: 'Оплата труда водителей', value: result.details.P_OTVti },
+                    { name: 'Оплата труда кондукторов', value: result.details.P_OTKti },
+                    { name: 'Социальные отчисления', value: result.details.SR_ti },
+                    { name: 'Топливо', value: result.details.P_Tti },
+                    { name: 'Смазочные материалы', value: result.details.P_SMti },
+                    { name: 'Шины', value: result.details.P_Shti },
+                    { name: 'ТО и ремонт', value: result.details.P_TOti },
+                    { name: 'Прочие и косвенные', value: result.details.PKR_ti },
+                    { name: 'Амортизация доп. оборудования', value: result.details.P_oi },
+                    { name: 'Аренда', value: result.details.RP_ijt },
+                ];
+
+                resultItems.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td>${item.name}</td><td>${item.value.toFixed(2)}</td>`;
+                    resultsTableBody.appendChild(row);
+                });
+
+                document.getElementById('resultSection').style.display = 'block';
+
+                addMessageToChat("Пользователь", "Выполнил расчет НМЦК.");
+                addMessageToChat("РасчетПоездок", `Расчет завершен! Итоговая НМЦК составляет ${result.summary.nmck_total.toFixed(2)} рублей. Подробности в таблице выше.`);
+            } else {
+                alert(`Ошибка расчета: ${result.error}`);
+            }
+        } catch (error) {
+            console.error('Ошибка при отправке запроса:', error);
+            alert('Произошла ошибка при отправке данных на сервер.');
+        }
+    });
+
+    async function downloadReport() {
+        if (!lastCalculationResults) {
+            alert('Сначала выполните расчет!');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${apiBase}/api/download-excel`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ calculation_results: lastCalculationResults }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Ошибка при создании отчета');
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `nmck_report_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+
+            addMessageToChat("РасчетПоездок", "Отчет успешно скачан! Файл содержит детальную информацию по расчету.");
+        } catch (error) {
+            console.error('Ошибка при скачивании:', error);
+            alert('Не удалось скачать отчет. Проверьте соединение с сервером.');
+        }
+    }
+
+    function addMessageToChat(sender, message) {
+        const chatMessages = document.getElementById('chatMessages');
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message');
+        if (sender === 'Пользователь') {
+            messageDiv.classList.add('user');
+        } else {
+            messageDiv.classList.add('raschetpoezdok');
+        }
+        messageDiv.textContent = `${sender}: ${message}`;
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('userInput');
+        const message = input.value.trim();
+        if (!message) return;
+
+        addMessageToChat("Пользователь", message);
+        input.value = '';
+
+        try {
+            let context = {};
+            if (lastCalculationResults) {
+                context = {
+                    cost_per_km: lastCalculationResults.summary.cost_per_km,
+                    nmck_total: lastCalculationResults.summary.nmck_total,
+                    K_pr_used: lastCalculationResults.summary.K_pr_used
+                };
+            }
+
+            const response = await fetch(`${apiBase}/api/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: message, context: context }),
+            });
+
+            const result = await response.json();
+            addMessageToChat("РасчетПоездок", result.response);
+        } catch (error) {
+            console.error('Ошибка при отправке сообщения в чат:', error);
+            addMessageToChat("РасчетПоездок", "Произошла ошибка при соединении с ИИ-ассистентом.");
+        }
+    }
+</script>
+
+</body>
+</html>
+
