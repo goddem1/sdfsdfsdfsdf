@@ -321,7 +321,7 @@
                 <!-- Результаты будут вставлены сюда -->
             </tbody>
         </table>
-        <button onclick="downloadReport()">Скачать отчет (Excel)</button>
+        <button type="button" onclick="downloadReport()">Скачать отчет (CSV)</button>
     </div>
 
     <!-- Чат с РасчетПоездок -->
@@ -340,101 +340,394 @@
 </div>
 
 <script>
-    // Храним последние результаты расчета
+    // Расчёт полностью в браузере (логика совпадает с calculation_engine.CalculationEngine.calculate).
     let lastCalculationResults = null;
 
-    // API base: если страница и API на одном домене — будет работать сразу
-    const apiBase = (new URLSearchParams(window.location.search)).get('apiBase') || window.location.origin;
+    const CALC_COEFFICIENTS = {
+        beta: { 'Городской': 0.87, 'Пригородный': 0.91, 'Межмуниципальный': 0.5 },
+        K_pr_ranges: [
+            [[0, 100000], 0.82],
+            [[100001, 300000], 0.79],
+            [[300001, 500000], 0.77],
+            [[500001, 1000000], 0.755],
+            [[1000001, Infinity], 0.73],
+        ],
+        climate: {
+            'Умеренная': { K_to: 1.0, K_kr: 1.0, K_zch: 1.0 },
+            'Умеренно холодная': { K_to: 0.9, K_kr: 1.2, K_zch: 1.25 },
+            'Холодная': { K_to: 1.2, K_kr: 1.25, K_zch: 1.25 },
+        },
+        normatives_fuel: {
+            'Особо малый': { 'Бензин': [13, 18], 'Дизель': [11, 15], 'Газ': [16, 22], 'Электро': 0 },
+            'Малый': { 'Бензин': [17, 22], 'Дизель': [15, 20], 'Газ': [20, 26], 'Электро': 0 },
+            'Средний': { 'Бензин': [25, 30], 'Дизель': [22, 27], 'Газ': [30, 36], 'Электро': 0 },
+            'Большой': { 'Бензин': [30, 36], 'Дизель': [27, 33], 'Газ': [36, 43], 'Электро': 0 },
+            'Особо большой': { 'Бензин': [35, 42], 'Дизель': [32, 38], 'Газ': [42, 50], 'Электро': 0 },
+        },
+        normatives_tyres_parts: {
+            'Особо малый': { U_shini: 0.15, U_zapchasti: 1.8 },
+            'Малый': { U_shini: 0.28, U_zapchasti: 3.2 },
+            'Средний': { U_shini: 0.45, U_zapchasti: 5.5 },
+            'Большой': { U_shini: 0.6, U_zapchasti: 7.2 },
+            'Особо большой': { U_shini: 0.75, U_zapchasti: 9.0 },
+        },
+        normatives_to_repair: {
+            'Особо малый': { T_to: 5, T_remont: 4 },
+            'Малый': { T_to: 8, T_remont: 6.4 },
+            'Средний': { T_to: 12, T_remont: 9.6 },
+            'Большой': { T_to: 15, T_remont: 12 },
+            'Особо большой': { T_to: 18, T_remont: 14.4 },
+        },
+        normatives_resource: {
+            'Особо малый': 400000,
+            'Малый': 640000,
+            'Средний': 750000,
+            'Большой': 900000,
+            'Особо большой': 1000000,
+        },
+    };
 
-    // Обработчик отправки формы
-    document.getElementById('calcForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
+    const CALC_CONSTANTS = {
+        lubricant_norm_pct: 0.075,
+        social_contribution_rate_default: 30.8,
+        FRV_driver_hours_per_year: 1772,
+        FRV_repairer_hours_per_year: 1812,
+        R_default: 1.096,
+        ZP_reg_avg: 87133,
+        ZPR_avg: 87154.3,
+        fuel_price: 65.4,
+    };
 
-        const formData = new FormData(this);
-        const data = Object.fromEntries(formData.entries());
+    function parseNum(v, fallback) {
+        if (v === undefined || v === null || v === '') return fallback;
+        const x = parseFloat(String(v).replace(/\s/g, '').replace(',', '.'));
+        return Number.isFinite(x) ? x : fallback;
+    }
 
-        try {
-            const response = await fetch(`${apiBase}/api/calculate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
-            });
+    function parseIntStrict(v, fallback) {
+        if (v === undefined || v === null || v === '') return fallback;
+        const x = parseInt(String(v).trim(), 10);
+        return Number.isFinite(x) ? x : fallback;
+    }
 
-            const result = await response.json();
-
-            if (result.success) {
-                lastCalculationResults = result;
-
-                document.getElementById('costPerKmResult').textContent = result.summary.cost_per_km.toFixed(2);
-                document.getElementById('nmckResult').textContent = result.summary.nmck_total.toFixed(2);
-
-                const resultsTableBody = document.getElementById('resultsTableBody');
-                resultsTableBody.innerHTML = '';
-
-                const resultItems = [
-                    { name: 'Оплата труда водителей', value: result.details.P_OTVti },
-                    { name: 'Оплата труда кондукторов', value: result.details.P_OTKti },
-                    { name: 'Социальные отчисления', value: result.details.SR_ti },
-                    { name: 'Топливо', value: result.details.P_Tti },
-                    { name: 'Смазочные материалы', value: result.details.P_SMti },
-                    { name: 'Шины', value: result.details.P_Shti },
-                    { name: 'ТО и ремонт', value: result.details.P_TOti },
-                    { name: 'Прочие и косвенные', value: result.details.PKR_ti },
-                    { name: 'Амортизация доп. оборудования', value: result.details.P_oi },
-                    { name: 'Аренда', value: result.details.RP_ijt },
-                ];
-
-                resultItems.forEach(item => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `<td>${item.name}</td><td>${item.value.toFixed(2)}</td>`;
-                    resultsTableBody.appendChild(row);
-                });
-
-                document.getElementById('resultSection').style.display = 'block';
-
-                addMessageToChat("Пользователь", "Выполнил расчет НМЦК.");
-                addMessageToChat("РасчетПоездок", `Расчет завершен! Итоговая НМЦК составляет ${result.summary.nmck_total.toFixed(2)} рублей. Подробности в таблице выше.`);
-            } else {
-                alert(`Ошибка расчета: ${result.error}`);
-            }
-        } catch (error) {
-            console.error('Ошибка при отправке запроса:', error);
-            alert('Произошла ошибка при отправке данных на сервер.');
+    function mapFormToEngineInput(raw) {
+        const fieldMapping = {
+            utilizationCoefficient: 'beta',
+            climateCoeffTO: 'K_to',
+            climateCoeffRepair: 'K_kr',
+            climateCoeffSpareParts: 'K_zch',
+        };
+        const mapped = {};
+        for (const [key, value] of Object.entries(raw)) {
+            if (['routeNumber', 'routeName', 'model'].includes(key)) continue;
+            mapped[fieldMapping[key] || key] = value;
         }
+        return mapped;
+    }
+
+    function calculateNmck(input_data) {
+        const calculation_steps = [];
+        try {
+            const L_ti = parseNum(input_data.contractRun, NaN);
+            const N_ijt = parseIntStrict(input_data.mainVehicles, NaN);
+            let N_res;
+            let res_formula;
+            const N_res_input = input_data.reserveVehicles;
+            if (N_res_input !== undefined && N_res_input !== null && String(N_res_input).trim() !== '') {
+                N_res = parseIntStrict(N_res_input, 0);
+                res_formula = 'Введено вручную';
+            } else if (N_ijt === 1) {
+                N_res = 1;
+                res_formula = 'N_res = 1 (при N_ijt = 1)';
+            } else {
+                N_res = Math.max(1, Math.floor(N_ijt / 10));
+                res_formula = `N_res = max(1, ${N_ijt} // 10) = ${N_res}`;
+            }
+
+            const M_Sijt = N_ijt + N_res;
+            const r_months = parseIntStrict(input_data.contractPeriod, NaN);
+            const P_t = parseNum(input_data.plannedFare, NaN);
+            const C_sub = parseNum(input_data.subsidies, NaN);
+            const vehicle_class = input_data.vehicleClass;
+            const route_type = input_data.routeType;
+            const climate_zone = input_data.climateZone;
+            const fuel_type = input_data.fuelType;
+            const R = parseNum(input_data.profitabilityLevel, CALC_CONSTANTS.R_default);
+            const L_ci_input = input_data.resourceUntilWriteOff;
+            const C_oi = parseNum(input_data.additionalEquipmentCost, 0);
+            const I_pct = parseNum(input_data.consumerPriceIndex, NaN);
+            const I_tt = parseNum(input_data.fuelPriceIndex, NaN);
+            const I_mt = parseNum(input_data.equipmentPriceIndex, NaN);
+            const k_pz = parseNum(input_data.prepCloseTimeCoeff, 1.0);
+            const K_pr_input = input_data.otherExpensesCoeff;
+            const K_zpi = parseNum(input_data.driverSalaryCoeff, NaN);
+            const k_bill = parseNum(input_data.ticketFunctionCoeff, NaN);
+            const St_c_pct = parseNum(
+                input_data.socialContributionRate,
+                CALC_CONSTANTS.social_contribution_rate_default
+            );
+            const D_pct = parseNum(input_data.fuelConsumptionCorrection, 0);
+
+            const climateDefault = { K_to: 1.0, K_kr: 1.0, K_zch: 1.0 };
+            let K_to;
+            if (input_data.K_to !== undefined && input_data.K_to !== null && String(input_data.K_to).trim() !== '') {
+                K_to = parseNum(input_data.K_to, 1);
+            } else {
+                K_to = (CALC_COEFFICIENTS.climate[climate_zone] || climateDefault).K_to;
+            }
+            let K_kr;
+            if (input_data.K_kr !== undefined && input_data.K_kr !== null && String(input_data.K_kr).trim() !== '') {
+                K_kr = parseNum(input_data.K_kr, 1);
+            } else {
+                K_kr = (CALC_COEFFICIENTS.climate[climate_zone] || climateDefault).K_kr;
+            }
+            let K_zch;
+            if (input_data.K_zch !== undefined && input_data.K_zch !== null && String(input_data.K_zch).trim() !== '') {
+                K_zch = parseNum(input_data.K_zch, 1);
+            } else {
+                K_zch = (CALC_COEFFICIENTS.climate[climate_zone] || climateDefault).K_zch;
+            }
+
+            const normatives_tp = CALC_COEFFICIENTS.normatives_tyres_parts[vehicle_class] || { U_shini: 0.28, U_zapchasti: 3.2 };
+            const U_shini = normatives_tp.U_shini;
+            const U_zapchasti = normatives_tp.U_zapchasti;
+
+            const normatives_tr = CALC_COEFFICIENTS.normatives_to_repair[vehicle_class] || { T_to: 8, T_remont: 6.4 };
+            const T_to_norm = normatives_tr.T_to;
+            const T_remont_norm = normatives_tr.T_remont;
+
+            let L_ci;
+            if (L_ci_input !== undefined && L_ci_input !== null && String(L_ci_input).trim() !== '') {
+                L_ci = parseNum(L_ci_input, 640000);
+            } else {
+                L_ci = CALC_COEFFICIENTS.normatives_resource[vehicle_class] || 640000;
+            }
+
+            const fuelNormRange = (CALC_COEFFICIENTS.normatives_fuel[vehicle_class] || {})[fuel_type];
+            let H_si;
+            if (fuelNormRange && fuelNormRange !== 0) {
+                if (Array.isArray(fuelNormRange)) {
+                    H_si = (fuelNormRange[0] + fuelNormRange[1]) / 2;
+                } else {
+                    H_si = fuelNormRange;
+                }
+            } else {
+                H_si = 17;
+            }
+
+            const ZP_reg_avg = CALC_CONSTANTS.ZP_reg_avg;
+            const ZPV_i = ZP_reg_avg * K_zpi;
+            const k_otpu = 1.0;
+            const ACH_ti = 182;
+            const FRV_v = CALC_CONSTANTS.FRV_driver_hours_per_year;
+
+            if (!(L_ti > 0) || !Number.isFinite(N_ijt) || !Number.isFinite(r_months) || r_months <= 0) {
+                return { success: false, error: 'Проверьте пробег, количество ТС и срок контракта (должен быть > 0).' };
+            }
+            if (!Number.isFinite(N_res) || !Number.isFinite(M_Sijt)) {
+                return { success: false, error: 'Проверьте количество основных ТС и расчёт резерва.' };
+            }
+            if (
+                !Number.isFinite(P_t) ||
+                !Number.isFinite(C_sub) ||
+                !Number.isFinite(I_pct) ||
+                !Number.isFinite(I_tt) ||
+                !Number.isFinite(I_mt) ||
+                !Number.isFinite(K_zpi) ||
+                !Number.isFinite(k_bill) ||
+                !Number.isFinite(R)
+            ) {
+                return { success: false, error: 'Проверьте числовые поля: индексы, коэффициенты, тариф, субсидии.' };
+            }
+            if (!Number.isFinite(K_to) || K_to === 0) {
+                return { success: false, error: 'Коэффициент K_то не может быть нулём.' };
+            }
+
+            const P_OTVti = (12 * ZPV_i * k_otpu * ACH_ti * k_pz * I_pct) / (L_ti * FRV_v);
+            const P_OTKti = P_OTVti * k_bill;
+            const SR_ti = (P_OTVti + P_OTKti) * (St_c_pct / 100);
+
+            const fuel_price = CALC_CONSTANTS.fuel_price;
+            const H_ot = 0;
+            const V_e = 61.667;
+            const N_z = 1;
+            const P_Tti =
+                fuel_price * (H_si / 100 * (1 + D_pct / 100) + (H_ot / V_e) * (N_z / 12)) * I_tt;
+
+            const P_SMti = P_Tti * CALC_CONSTANTS.lubricant_norm_pct;
+            const P_Shti = U_shini * I_mt;
+
+            const ZPR_avg = CALC_CONSTANTS.ZPR_avg;
+            const FRV_rr = CALC_CONSTANTS.FRV_repairer_hours_per_year;
+            const FOT_rr_i =
+                (12 * ZPR_avg / FRV_rr) *
+                I_pct *
+                (T_to_norm / K_to + T_remont_norm * K_kr) *
+                0.001 *
+                (1 + St_c_pct / 100);
+            const RZCH_ti = U_zapchasti * K_zch * I_mt;
+            const P_TOti = FOT_rr_i + RZCH_ti;
+
+            let K_pr;
+            if (K_pr_input !== undefined && K_pr_input !== null && String(K_pr_input).trim() !== '') {
+                K_pr = parseNum(K_pr_input, NaN);
+            } else {
+                const total_annual_run = L_ti * M_Sijt * (12 / r_months);
+                K_pr = null;
+                for (const [[minVal, maxVal], coeff] of CALC_COEFFICIENTS.K_pr_ranges) {
+                    if (total_annual_run >= minVal && total_annual_run <= maxVal) {
+                        K_pr = coeff;
+                        break;
+                    }
+                }
+                if (K_pr === null) {
+                    return {
+                        success: false,
+                        error: `Не удалось определить K_pr для общего годового пробега ${total_annual_run}`,
+                    };
+                }
+            }
+            if (!Number.isFinite(K_pr)) {
+                return { success: false, error: 'Проверьте коэффициент прочих расходов (K_пр) или исходные данные.' };
+            }
+
+            const base_for_Kpr = P_Tti + P_SMti + P_Shti + P_TOti;
+            const PKR_ti = K_pr * base_for_Kpr;
+
+            const P_oi = r_months > 0 ? C_oi / (L_ci * (r_months / 12)) : 0;
+            const RP_ijt = 0.0;
+
+            const C =
+                P_OTVti +
+                P_OTKti +
+                SR_ti +
+                P_Tti +
+                P_SMti +
+                P_Shti +
+                P_TOti +
+                PKR_ti +
+                P_oi +
+                RP_ijt;
+
+            const nmck_value = C * R * L_ti * M_Sijt - P_t - C_sub;
+
+            calculation_steps.push(
+                { Этап: 'Входные данные', Параметр: 'Плановый пробег (L_ti)', Значение: String(L_ti), Формула: 'Из формы ввода', Результат: `${L_ti} км/мес` },
+                { Этап: 'Входные данные', Параметр: 'Основные ТС (N_ijt)', Значение: String(N_ijt), Формула: 'Из формы ввода', Результат: `${N_ijt} ед.` },
+                { Этап: 'Входные данные', Параметр: 'Резервные ТС (N_res)', Значение: String(N_res), Формула: res_formula, Результат: `${N_res} ед.` },
+                { Этап: 'Расчет', Параметр: 'Всего ТС (M_Sijt)', Значение: String(M_Sijt), Формула: `M_Sijt = N_ijt + N_res`, Результат: `${M_Sijt} ед.` }
+            );
+
+            return {
+                success: true,
+                summary: {
+                    cost_per_km: Math.round(C * 1e6) / 1e6,
+                    nmck_total: Math.round(nmck_value * 100) / 100,
+                    total_vehicles: M_Sijt,
+                    annual_run: Math.round(L_ti * M_Sijt * (12 / r_months) * 100) / 100,
+                    K_pr_used: K_pr,
+                },
+                details: {
+                    P_OTVti: Math.round(P_OTVti * 1e6) / 1e6,
+                    P_OTKti: Math.round(P_OTKti * 1e6) / 1e6,
+                    SR_ti: Math.round(SR_ti * 1e6) / 1e6,
+                    P_Tti: Math.round(P_Tti * 1e6) / 1e6,
+                    P_SMti: Math.round(P_SMti * 1e6) / 1e6,
+                    P_Shti: Math.round(P_Shti * 1e6) / 1e6,
+                    P_TOti: Math.round(P_TOti * 1e6) / 1e6,
+                    PKR_ti: Math.round(PKR_ti * 1e6) / 1e6,
+                    P_oi: Math.round(P_oi * 1e6) / 1e6,
+                    RP_ijt: Math.round(RP_ijt * 1e6) / 1e6,
+                },
+                calculation_steps,
+                input_data_used: {
+                    L_ti,
+                    M_Sijt,
+                    R,
+                    P_t,
+                    C_sub,
+                    K_pr,
+                    vehicle_class,
+                    route_type,
+                    fuel_type,
+                    climate_zone,
+                },
+            };
+        } catch (err) {
+            return { success: false, error: String(err && err.message ? err.message : err) };
+        }
+    }
+
+    function applyCalculationResult(result) {
+        if (!result.success) {
+            alert(`Ошибка расчета: ${result.error}`);
+            return;
+        }
+        lastCalculationResults = result;
+        document.getElementById('costPerKmResult').textContent = result.summary.cost_per_km.toFixed(2);
+        document.getElementById('nmckResult').textContent = result.summary.nmck_total.toFixed(2);
+
+        const resultsTableBody = document.getElementById('resultsTableBody');
+        resultsTableBody.innerHTML = '';
+        const resultItems = [
+            { name: 'Оплата труда водителей', value: result.details.P_OTVti },
+            { name: 'Оплата труда кондукторов', value: result.details.P_OTKti },
+            { name: 'Социальные отчисления', value: result.details.SR_ti },
+            { name: 'Топливо', value: result.details.P_Tti },
+            { name: 'Смазочные материалы', value: result.details.P_SMti },
+            { name: 'Шины', value: result.details.P_Shti },
+            { name: 'ТО и ремонт', value: result.details.P_TOti },
+            { name: 'Прочие и косвенные', value: result.details.PKR_ti },
+            { name: 'Амортизация доп. оборудования', value: result.details.P_oi },
+            { name: 'Аренда', value: result.details.RP_ijt },
+        ];
+        resultItems.forEach((item) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `<td>${item.name}</td><td>${item.value.toFixed(2)}</td>`;
+            resultsTableBody.appendChild(row);
+        });
+        document.getElementById('resultSection').style.display = 'block';
+        addMessageToChat('Пользователь', 'Выполнил расчет НМЦК.');
+        addMessageToChat(
+            'РасчетПоездок',
+            `Расчет завершен! Итоговая НМЦК составляет ${result.summary.nmck_total.toFixed(2)} рублей. Подробности в таблице выше.`
+        );
+    }
+
+    document.getElementById('calcForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const raw = Object.fromEntries(formData.entries());
+        const input = mapFormToEngineInput(raw);
+        const result = calculateNmck(input);
+        applyCalculationResult(result);
     });
 
-    async function downloadReport() {
+    function downloadReport() {
         if (!lastCalculationResults) {
             alert('Сначала выполните расчет!');
             return;
         }
-
-        try {
-            const response = await fetch(`${apiBase}/api/download-excel`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ calculation_results: lastCalculationResults }),
-            });
-
-            if (!response.ok) {
-                throw new Error('Ошибка при создании отчета');
-            }
-
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `nmck_report_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            a.remove();
-
-            addMessageToChat("РасчетПоездок", "Отчет успешно скачан! Файл содержит детальную информацию по расчету.");
-        } catch (error) {
-            console.error('Ошибка при скачивании:', error);
-            alert('Не удалось скачать отчет. Проверьте соединение с сервером.');
-        }
+        const r = lastCalculationResults;
+        const lines = [];
+        lines.push('Раздел;Показатель;Значение');
+        lines.push(`Сводка;Себестоимость 1 км (C);${r.summary.cost_per_km}`);
+        lines.push(`Сводка;НМЦК;${r.summary.nmck_total}`);
+        lines.push(`Сводка;Всего ТС;${r.summary.total_vehicles}`);
+        lines.push(`Сводка;Годовой пробег;${r.summary.annual_run}`);
+        lines.push(`Сводка;K_pr;${r.summary.K_pr_used}`);
+        const d = r.details;
+        Object.keys(d).forEach((k) => lines.push(`Детально;${k};${d[k]}`));
+        const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `nmck_report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        addMessageToChat('РасчетПоездок', 'Отчет скачан (CSV, открывается в Excel).');
     }
 
     function addMessageToChat(sender, message) {
@@ -451,36 +744,37 @@
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    async function sendMessage() {
+    function sendMessage() {
         const input = document.getElementById('userInput');
         const message = input.value.trim();
         if (!message) return;
-
-        addMessageToChat("Пользователь", message);
+        addMessageToChat('Пользователь', message);
         input.value = '';
-
-        try {
-            let context = {};
-            if (lastCalculationResults) {
-                context = {
-                    cost_per_km: lastCalculationResults.summary.cost_per_km,
-                    nmck_total: lastCalculationResults.summary.nmck_total,
-                    K_pr_used: lastCalculationResults.summary.K_pr_used
-                };
-            }
-
-            const response = await fetch(`${apiBase}/api/chat`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: message, context: context }),
-            });
-
-            const result = await response.json();
-            addMessageToChat("РасчетПоездок", result.response);
-        } catch (error) {
-            console.error('Ошибка при отправке сообщения в чат:', error);
-            addMessageToChat("РасчетПоездок", "Произошла ошибка при соединении с ИИ-ассистентом.");
+        const lower = message.toLowerCase();
+        let context = null;
+        if (lastCalculationResults) {
+            context = {
+                K_pr_used: lastCalculationResults.summary.K_pr_used,
+                nmck_total: lastCalculationResults.summary.nmck_total,
+            };
         }
+        let ai = 'Я вас понял. ';
+        if (lower.includes('k_pr') || lower.includes('коэфф')) {
+            if (context) {
+                ai += `Коэффициент K_пр в последнем расчете: ${context.K_pr_used}.`;
+            } else {
+                ai += 'Коэффициент K_пр зависит от общего годового пробега и определяется по таблице в Приказе 402.';
+            }
+        } else if (lower.includes('nmck') || lower.includes('цена') || lower.includes('нмцк')) {
+            if (context) {
+                ai += `НМЦК в последнем расчете: ${context.nmck_total} руб.`;
+            } else {
+                ai += 'НМЦК рассчитывается по формуле: C × R × L_ijt × M_Sijt − P_t − C_суб.';
+            }
+        } else {
+            ai += 'Задайте вопрос о расчете, и я постараюсь помочь.';
+        }
+        addMessageToChat('РасчетПоездок', ai);
     }
 </script>
 
